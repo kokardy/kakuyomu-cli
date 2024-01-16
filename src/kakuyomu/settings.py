@@ -1,6 +1,28 @@
 import os
 from typing import Final
 
+from kakuyomu.logger import get_logger
+
+logger = get_logger()
+config_dirname = ".kakuyomu"
+
+def find_work_dir() -> str:
+    cwd = os.getcwd()
+    while True:
+        path = os.path.join(cwd, config_dirname)
+        if os.path.exists(path):
+            if os.path.isdir(path):
+                logger.info(f"work dir found: {cwd}")
+                return cwd
+        cwd = os.path.dirname(cwd)
+        if cwd == "/":
+            raise FileNotFoundError(f"{config_dirname} not found")
+
+def find_config_dir() -> str:
+    root = find_work_dir()
+    return os.path.join(root, config_dirname)
+
+
 
 class ConstMeta(type):
     def __setattr__(self, name, value):
@@ -28,7 +50,7 @@ class Login(metaclass=ConstMeta):
 
 
 class Config(metaclass=ConstMeta):
-    DIR: Final[str] = os.path.expanduser("~/.config/kakuyomu")
+    DIR: Final[str] = find_config_dir()
     COOKIE: Final[str] = os.path.join(DIR, "cookie")
 
 

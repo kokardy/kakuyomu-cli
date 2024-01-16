@@ -2,14 +2,16 @@ import pickle
 
 import requests
 
+from kakuyomu.scrapers.my import MyScraper
 from kakuyomu.settings import URL, Config, Login
+from kakuyomu.types import Work, WorkId
 
 
 class Client:
     session: requests.Session
     cookie: requests.cookies.RequestsCookieJar
 
-    def __init__(self, cookie_path: str  = Config.COOKIE ):
+    def __init__(self, cookie_path: str = Config.COOKIE):
         self.session = requests.Session()
         cookies = self._load_cookie(cookie_path)
         if cookies:
@@ -52,3 +54,9 @@ class Client:
         filepath = Config.COOKIE
         with open(filepath, "wb") as f:
             pickle.dump(res.cookies, f)
+
+    def get_works(self) -> dict[WorkId, Work]:
+        res = self._get(URL.MY_WORKS)
+        html = res.text
+        works = MyScraper(html).scrape_works()
+        return works
