@@ -1,4 +1,4 @@
-from kakuyomu.utils.web import Client
+from kakuyomu.client import Client
 
 from .helper import Test
 
