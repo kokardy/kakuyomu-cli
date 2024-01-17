@@ -3,7 +3,7 @@ import os
 import pytest
 
 from kakuyomu.logger import get_logger
-from kakuyomu.utils.web import Client
+from kakuyomu.client.web import Client
 
 COOKIE_PATH = "/tmp/kakuyomu_cookie"
 
@@ -34,6 +34,14 @@ set_color()
 def remove_cookie() -> None:
     if os.path.exists(COOKIE_PATH):
         os.remove(COOKIE_PATH)
+
+
+@pytest.fixture(scope="class")
+def client() -> Client:
+    remove_cookie()
+    client = Client(COOKIE_PATH)
+    client.login()
+    return client
 
 
 @pytest.fixture

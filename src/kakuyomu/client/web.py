@@ -1,10 +1,12 @@
 import pickle
+import os
 
 import requests
 
-from kakuyomu.scrapers.my import MyScraper
-from kakuyomu.settings import URL, Config, Login
-from kakuyomu.types import Work, WorkId
+from kakuyomu.scrapers.my_page import MyPageScraper
+from kakuyomu.scrapers.work_page import WorkPageScraper
+from kakuyomu.settings import URL, Config, Login, WorkConfig
+from kakuyomu.types import Episode, EpisodeId, LoginStatus, Work, WorkId
 
 
 class Client:
@@ -36,9 +38,14 @@ class Client:
     def status(self) -> bool:
         res = self._get(URL.MY)
         if res.text.find("ログイン") != -1:
-            return False
+            return LoginStatus(is_login=False, email="")
         else:
-            return True
+            return LoginStatus(is_login=True, email="Config.EMAIL_ADDRESS")
+
+    def logout(self) -> None:
+        self.session.cookies.clear()
+        if os.path.exists(Config.COOKIE):
+            os.remove(Config.COOKIE)
 
     def login(self):
         res = self._get(URL.LOGIN)
@@ -56,7 +63,13 @@ class Client:
             pickle.dump(res.cookies, f)
 
     def get_works(self) -> dict[WorkId, Work]:
-        res = self._get(URL.MY_WORKS)
+        res = self._get(URL.MY)
         html = res.text
-        works = MyScraper(html).scrape_works()
+        works = MyPageScraper(html).scrape_works()
         return works
+
+    def get_episodes(self, work_id: WorkId = WorkConfig.ID) -> dict[EpisodeId, Episode]:
+        res = self._get(URL.MY_WORK.format(work_id=work_id))
+        html = res.text
+        episodes = WorkPageScraper(html).scrape_episodes()
+        return episodes
