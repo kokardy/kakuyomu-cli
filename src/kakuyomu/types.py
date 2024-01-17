@@ -14,3 +14,11 @@ class Work(BaseModel):
 class Episode(BaseModel):
     id: WorkId
     title: str
+
+
+class LoginStatus(BaseModel):
+    is_login: bool
+    email: str
+
+class WorkConfig(BaseModel):
+    id: WorkId
