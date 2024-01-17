@@ -8,6 +8,7 @@ dependencies = [
     "beautifulsoup4>=4.12.2",
     "pydantic>=2.5.3",
     "coloredlogs>=15.0.1",
+    "toml>=0.10.2",
 ]
 readme = "README.md"
 requires-python = ">= 3.12"

@@ -3,11 +3,11 @@ import bs4
 from kakuyomu.types import WorkId, Work
 
 
-class MyScraper:
+class MyPageScraper:
     def __init__(self, html):
         self.html = html
 
-    def scrape_works(self) -> dict[WorkId, str]:
+    def scrape_works(self) -> dict[WorkId, Work]:
         soup = bs4.BeautifulSoup(self.html, "html.parser")
         links = soup.find_all("h2", class_="workColumn-workTitle")
         result = {}

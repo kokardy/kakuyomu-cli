@@ -1,10 +1,16 @@
 import os
+from functools import lru_cache
 from typing import Final
 
+import toml
+
 from kakuyomu.logger import get_logger
+from kakuyomu.types import WorkConfig
 
 logger = get_logger()
 config_dirname = ".kakuyomu"
+work_config_file_name = "config.toml"
+
 
 def find_work_dir() -> str:
     cwd = os.getcwd()
@@ -17,6 +23,7 @@ def find_work_dir() -> str:
         cwd = os.path.dirname(cwd)
         if cwd == "/":
             raise FileNotFoundError(f"{config_dirname} not found")
+
 
 def find_config_dir() -> str:
     root = find_work_dir()
@@ -40,7 +47,7 @@ class URL(metaclass=ConstMeta):
     ROOT: Final[str] = "https://kakuyomu.jp"
     LOGIN: Final[str] = f"{ROOT}/login"
     MY: Final[str] = f"{ROOT}/my"
-    MY_WORKS: Final[str] = f"{MY}/works"
+    MY_WORK: Final[str] = f"{MY}/works/" + "{work_id}"
     ANNTENA_WORKS: Final[str] = f"{ROOT}/anntena/works"
 
 
@@ -52,6 +59,16 @@ class Login(metaclass=ConstMeta):
 class Config(metaclass=ConstMeta):
     DIR: Final[str] = find_config_dir()
     COOKIE: Final[str] = os.path.join(DIR, "cookie")
+
+
+@lru_cache(maxsize=5)
+def work_config(config_dir: str = Config.DIR) -> str:
+    work_file = os.path.join(config_dir, work_config_file_name)
+    with open(work_file, "r") as f:
+        return WorkConfig(**toml.load(f))
+
+class WorkConfig(metaclass=ConstMeta):
+    ID: Final[str] = work_config().id
 
 
 os.makedirs(Config.DIR, exist_ok=True)
