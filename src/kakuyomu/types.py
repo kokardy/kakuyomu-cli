@@ -20,5 +20,6 @@ class LoginStatus(BaseModel):
     is_login: bool
     email: str
 
+
 class WorkConfig(BaseModel):
     id: WorkId

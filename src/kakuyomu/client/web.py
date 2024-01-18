@@ -1,11 +1,11 @@
-import pickle
 import os
+import pickle
 
 import requests
 
 from kakuyomu.scrapers.my_page import MyPageScraper
 from kakuyomu.scrapers.work_page import WorkPageScraper
-from kakuyomu.settings import URL, Config, Login, WorkConfig
+from kakuyomu.settings import URL, Config, Login, WorkSettings
 from kakuyomu.types import Episode, EpisodeId, LoginStatus, Work, WorkId
 
 
@@ -19,7 +19,8 @@ class Client:
         if cookies:
             self.session.cookies = cookies
 
-    def _load_cookie(self, filepath: str):
+    def _load_cookie(self, filepath: str) -> requests.cookies.RequestsCookieJar | None:
+        cookie: requests.cookies.RequestsCookieJar
         try:
             with open(filepath, "rb") as f:
                 cookie = pickle.load(f)
@@ -29,13 +30,13 @@ class Client:
         except pickle.UnpicklingError:
             return None
 
-    def _get(self, url, **kwargs):
+    def _get(self, url: str, **kwargs) -> requests.Response:  # type: ignore
         return self.session.get(url, **kwargs)
 
-    def _post(self, url, **kwargs):
+    def _post(self, url: str, **kwargs) -> requests.Response:  # type: ignore
         return self.session.post(url, **kwargs)
 
-    def status(self) -> bool:
+    def status(self) -> LoginStatus:
         res = self._get(URL.MY)
         if res.text.find("ログイン") != -1:
             return LoginStatus(is_login=False, email="")
@@ -47,7 +48,7 @@ class Client:
         if os.path.exists(Config.COOKIE):
             os.remove(Config.COOKIE)
 
-    def login(self):
+    def login(self) -> None:
         res = self._get(URL.LOGIN)
         email_address = Login.EMAIL_ADDRESS
         password = Login.PASSWORD
@@ -68,7 +69,7 @@ class Client:
         works = MyPageScraper(html).scrape_works()
         return works
 
-    def get_episodes(self, work_id: WorkId = WorkConfig.ID) -> dict[EpisodeId, Episode]:
+    def get_episodes(self, work_id: WorkId = WorkSettings.ID) -> dict[EpisodeId, Episode]:
         res = self._get(URL.MY_WORK.format(work_id=work_id))
         html = res.text
         episodes = WorkPageScraper(html).scrape_episodes()

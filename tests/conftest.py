@@ -8,7 +8,7 @@ from kakuyomu.client.web import Client
 COOKIE_PATH = "/tmp/kakuyomu_cookie"
 
 
-def set_color():
+def set_color() -> None:
     import coloredlogs
 
     coloredlogs.DEFAULT_LEVEL_STYLES = {
