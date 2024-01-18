@@ -17,7 +17,6 @@ class WorkPageScraper:
             href = link.get("href")
             if not href or not isinstance(href, str):
                 continue
-            assert isinstance(href, str)
             episode_id = href.split("/")[-1]
             episode_title = link.text
             episode = Episode(id=episode_id, title=episode_title)
