@@ -4,7 +4,9 @@ from kakuyomu.types import WorkId, Work
 
 
 class MyPageScraper:
-    def __init__(self, html):
+    html: str
+
+    def __init__(self, html: str):
         self.html = html
 
     def scrape_works(self) -> dict[WorkId, Work]:

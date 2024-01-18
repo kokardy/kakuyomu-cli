@@ -6,9 +6,9 @@ from .helper import Test
 class TestLogin(Test):
     def test_status_not_login(self, logout_client: Client) -> None:
         status = logout_client.status()
-        assert status == False
+        assert status.is_login == False
 
     def test_status_login(self, login_client: Client) -> None:
         login_client.login()
         status = login_client.status()
-        assert status == True
+        assert status.is_login == True
