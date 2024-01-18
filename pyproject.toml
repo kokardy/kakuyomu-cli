@@ -4,11 +4,14 @@ version = "0.1.0"
 description = "Add your description here"
 authors = [{ name = "kokardy", email = "mgc1028@gmail.com" }]
 dependencies = [
-    "requests>=2.31.0",
-    "beautifulsoup4>=4.12.2",
-    "pydantic>=2.5.3",
-    "coloredlogs>=15.0.1",
-    "toml>=0.10.2",
+  "requests>=2.31.0",
+  "beautifulsoup4>=4.12.2",
+  "pydantic>=2.5.3",
+  "coloredlogs>=15.0.1",
+  "types-beautifulsoup4>=4.12.0.20240106",
+  "types-requests>=2.31.0.20240106",
+  "types-toml>=0.10.8.7",
+  "toml>=0.10.2",
 ]
 readme = "README.md"
 requires-python = ">= 3.12"
@@ -22,13 +25,16 @@ build-backend = "hatchling.build"
 [tool.rye]
 managed = true
 dev-dependencies = [
-    "pytest>=7.4.3",
-    "mypy>=1.8.0",
-    "ruff>=0.1.9",
-    "black>=23.12.1",
-    "isort>=5.13.2",
-    "coloredlog>=0.2.5",
-    "pre-commit>=3.6.0",
+  "pytest>=7.4.3",
+  "mypy>=1.8.0",
+  "ruff>=0.1.13",
+  "black>=23.12.1",
+  "isort>=5.13.2",
+  "coloredlog>=0.2.5",
+  "pre-commit>=3.6.0",
+  "types-beautifulsoup4>=4.12.0.20240106",
+  "types-toml>=0.10.8.7",
+  "types-requests>=2.31.0.20240106",
 ]
 
 [tool.hatch.metadata]
@@ -52,9 +58,34 @@ max-line-length = 120
 python_version = "3.12"
 
 [[tool.mypy.overrides]]
-module = "tests.*"
+module = "kakuyomu.*"
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "kakuyomu.cli.*"
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
 disallow_untyped_defs = false
 ignore_missing_imports = true
+disallow_untyped_decorators = false
+
+[[tool.mypy.overrides]]
+module = [
+  "coloredlogs.*",
+  "pydantic.*",
+  "bs4.*",
+  "click.*",
+  "toml.*",
+  "requests.*",
+  "pytest.*",
+]
+disallow_untyped_defs = false
+follow_imports = "silent"
+ignore_missing_imports = true
+disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

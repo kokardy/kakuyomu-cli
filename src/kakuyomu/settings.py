@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from typing import Final
+from typing import Any, Final
 
 import toml
 
@@ -30,13 +30,12 @@ def find_config_dir() -> str:
     return os.path.join(root, config_dirname)
 
 
-
 class ConstMeta(type):
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any) -> None:
         if name in self.__dict__:
             raise TypeError(f"cannot reassign const {name!r}")
         else:
-            self.__setsetattr__(name, value)
+            self.__setattr__(name, value)
 
     def __delattr__(self, name: str) -> None:
         if name in self.__dict__:
@@ -52,8 +51,8 @@ class URL(metaclass=ConstMeta):
 
 
 class Login(metaclass=ConstMeta):
-    EMAIL_ADDRESS: Final[str] = os.environ.get("KAKUYOMU_EMAIL_ADDRESS")
-    PASSWORD: Final[str] = os.environ.get("KAKUYOMU_PASSWORD")
+    EMAIL_ADDRESS: Final[str] = os.environ.get("KAKUYOMU_EMAIL_ADDRESS", "")
+    PASSWORD: Final[str] = os.environ.get("KAKUYOMU_PASSWORD", "")
 
 
 class Config(metaclass=ConstMeta):
@@ -62,12 +61,13 @@ class Config(metaclass=ConstMeta):
 
 
 @lru_cache(maxsize=5)
-def work_config(config_dir: str = Config.DIR) -> str:
+def work_config(config_dir: str = Config.DIR) -> WorkConfig:
     work_file = os.path.join(config_dir, work_config_file_name)
     with open(work_file, "r") as f:
         return WorkConfig(**toml.load(f))
 
-class WorkConfig(metaclass=ConstMeta):
+
+class WorkSettings(metaclass=ConstMeta):
     ID: Final[str] = work_config().id
 
 

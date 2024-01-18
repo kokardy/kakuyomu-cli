@@ -6,35 +6,35 @@ client = Client()
 
 
 @click.group()
-def cli():
+def cli() -> None:
     pass
 
 
 @cli.command()
-def status():
+def status() -> None:
     print(client.status())
 
 
 @cli.command()
-def logout():
+def logout() -> None:
     client.logout()
     print("logout")
 
 
 @cli.command()
-def login():
+def login() -> None:
     client.login()
     print(client.status())
 
 
 @cli.command()
-def works():
+def works() -> None:
     for work in client.get_works().values():
         print(work)
 
 
 @cli.command()
-def episodes():
+def episodes() -> None:
     for episode in client.get_episodes().values():
         print(episode)
 
