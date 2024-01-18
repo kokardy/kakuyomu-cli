@@ -13,5 +13,5 @@ logger.addHandler(handler)
 coloredlogs.install(logger=logger)
 
 
-def get_logger():
+def get_logger() -> logging.Logger:
     return logger
