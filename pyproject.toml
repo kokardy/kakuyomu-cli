@@ -98,3 +98,4 @@ extraPaths = ["src", ".venv/lib/python3.12/site-packages"]
 
 [tool.rye.scripts]
 test = "pytest -s"
+typecheck = "mypy --strict ."
