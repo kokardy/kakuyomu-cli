@@ -1,3 +1,4 @@
+"""Module for logging"""
 import logging
 
 import coloredlogs
@@ -14,4 +15,5 @@ coloredlogs.install(logger=logger)
 
 
 def get_logger() -> logging.Logger:
+    """Get logger"""
     return logger

@@ -1,3 +1,4 @@
+"""CLI Settings"""
 import os
 from functools import lru_cache
 from typing import Any, Final
@@ -13,6 +14,10 @@ work_config_file_name = "config.toml"
 
 
 def find_work_dir() -> str:
+    """Find work dir
+
+    Find work dir from current working directory.
+    """
     cwd = os.getcwd()
     while True:
         path = os.path.join(cwd, config_dirname)
@@ -26,23 +31,33 @@ def find_work_dir() -> str:
 
 
 def find_config_dir() -> str:
+    """Find config_dir
+
+    Find config_dir from work dir.
+    """
     root = find_work_dir()
     return os.path.join(root, config_dirname)
 
 
 class ConstMeta(type):
+    """Const meta class"""
+
     def __setattr__(self, name: str, value: Any) -> None:
+        """Deny reassign const"""
         if name in self.__dict__:
             raise TypeError(f"cannot reassign const {name!r}")
         else:
             self.__setattr__(name, value)
 
     def __delattr__(self, name: str) -> None:
+        """Deny delete const"""
         if name in self.__dict__:
             raise TypeError(f"cannot delete const {name!r}")
 
 
 class URL(metaclass=ConstMeta):
+    """URL constants"""
+
     ROOT: Final[str] = "https://kakuyomu.jp"
     LOGIN: Final[str] = f"{ROOT}/login"
     MY: Final[str] = f"{ROOT}/my"
@@ -51,23 +66,34 @@ class URL(metaclass=ConstMeta):
 
 
 class Login(metaclass=ConstMeta):
+    """Login constants"""
+
     EMAIL_ADDRESS: Final[str] = os.environ.get("KAKUYOMU_EMAIL_ADDRESS", "")
     PASSWORD: Final[str] = os.environ.get("KAKUYOMU_PASSWORD", "")
 
 
 class Config(metaclass=ConstMeta):
+    """Config constants"""
+
     DIR: Final[str] = find_config_dir()
     COOKIE: Final[str] = os.path.join(DIR, "cookie")
 
 
 @lru_cache(maxsize=5)
 def work_config(config_dir: str = Config.DIR) -> WorkConfig:
+    """Load work config
+
+    Load work config from config_dir.
+    Result is caches.
+    """
     work_file = os.path.join(config_dir, work_config_file_name)
     with open(work_file, "r") as f:
         return WorkConfig(**toml.load(f))
 
 
 class WorkSettings(metaclass=ConstMeta):
+    """Work settings"""
+
     ID: Final[str] = work_config().id
 
 

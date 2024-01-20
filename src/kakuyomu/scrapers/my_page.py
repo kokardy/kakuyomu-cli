@@ -1,15 +1,20 @@
+"""Scrape my page."""
 import bs4
 
-from kakuyomu.types import WorkId, Work
+from kakuyomu.types import Work, WorkId
 
 
 class MyPageScraper:
+    """Class for scrape my page."""
+
     html: str
 
     def __init__(self, html: str):
+        """Initialize MyPageScraper"""
         self.html = html
 
     def scrape_works(self) -> dict[WorkId, Work]:
+        """Scrape works from my page"""
         soup = bs4.BeautifulSoup(self.html, "html.parser")
         links = soup.find_all("h2", class_="workColumn-workTitle")
         result = {}
