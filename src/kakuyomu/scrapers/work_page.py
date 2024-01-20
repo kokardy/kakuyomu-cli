@@ -1,15 +1,21 @@
+"""Scrape work page."""
+
 import bs4
 
 from kakuyomu.types import Episode, EpisodeId
 
 
 class WorkPageScraper:
+    """Class for scrape work page."""
+
     html: str
 
     def __init__(self, html: str):
+        """Initialize WorkPageScraper"""
         self.html = html
 
     def scrape_episodes(self) -> dict[EpisodeId, Episode]:
+        """Scrape episodes from work page"""
         soup = bs4.BeautifulSoup(self.html, "html.parser")
         links = soup.select("td.episode-title a")
         result: dict[EpisodeId, Episode] = {}

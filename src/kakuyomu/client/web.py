@@ -1,3 +1,7 @@
+"""Web client for kakuyomu
+
+This module is a web client for kakuyomu.jp.
+"""
 import os
 import pickle
 
@@ -10,10 +14,13 @@ from kakuyomu.types import Episode, EpisodeId, LoginStatus, Work, WorkId
 
 
 class Client:
+    """Web client for kakuyomu"""
+
     session: requests.Session
     cookie: requests.cookies.RequestsCookieJar
 
     def __init__(self, cookie_path: str = Config.COOKIE):
+        """Initialize web client"""
         self.session = requests.Session()
         cookies = self._load_cookie(cookie_path)
         if cookies:
@@ -37,6 +44,7 @@ class Client:
         return self.session.post(url, **kwargs)
 
     def status(self) -> LoginStatus:
+        """Get login status"""
         res = self._get(URL.MY)
         if res.text.find("ログイン") != -1:
             return LoginStatus(is_login=False, email="")
@@ -44,11 +52,13 @@ class Client:
             return LoginStatus(is_login=True, email="Config.EMAIL_ADDRESS")
 
     def logout(self) -> None:
+        """Logout"""
         self.session.cookies.clear()
         if os.path.exists(Config.COOKIE):
             os.remove(Config.COOKIE)
 
     def login(self) -> None:
+        """Login"""
         res = self._get(URL.LOGIN)
         email_address = Login.EMAIL_ADDRESS
         password = Login.PASSWORD
@@ -64,12 +74,14 @@ class Client:
             pickle.dump(res.cookies, f)
 
     def get_works(self) -> dict[WorkId, Work]:
+        """Get works"""
         res = self._get(URL.MY)
         html = res.text
         works = MyPageScraper(html).scrape_works()
         return works
 
     def get_episodes(self, work_id: WorkId = WorkSettings.ID) -> dict[EpisodeId, Episode]:
+        """Get episodes"""
         res = self._get(URL.MY_WORK.format(work_id=work_id))
         html = res.text
         episodes = WorkPageScraper(html).scrape_episodes()

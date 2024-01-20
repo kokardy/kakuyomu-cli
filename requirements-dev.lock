@@ -36,7 +36,7 @@ pydantic-core==2.14.6
 pytest==7.4.4
 pyyaml==6.0.1
 requests==2.31.0
-ruff==0.1.13
+ruff==0.1.14
 soupsieve==2.5
 toml==0.10.2
 types-beautifulsoup4==4.12.0.20240106
