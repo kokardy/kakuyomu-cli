@@ -1,6 +1,7 @@
 """work settings"""
 
 import os
+from functools import lru_cache
 from typing import Final
 
 import toml
@@ -13,6 +14,7 @@ from .const import CONFIG_DIRNAME, WORK_FILENAME
 logger = get_logger()
 
 
+@lru_cache
 def find_work_dir() -> str:
     """Find work dir
 
@@ -26,11 +28,12 @@ def find_work_dir() -> str:
                 logger.info(f"work dir found: {cwd}")
                 return cwd
         cwd = os.path.dirname(cwd)
-        if cwd == "/":
+        if os.path.abspath(cwd) == os.path.abspath(os.path.sep):
             raise FileNotFoundError(f"{CONFIG_DIRNAME} not found")
 
 
-def find_config_dir() -> str:
+@lru_cache
+def get_config_dir() -> str:
     """Find config_dir
 
     Find config_dir from work dir.
@@ -39,30 +42,35 @@ def find_config_dir() -> str:
     return os.path.join(root, CONFIG_DIRNAME)
 
 
-CONFIG_DIR: Final[str] = find_config_dir()
-COOKIE: Final[str] = os.path.join(CONFIG_DIR, "cookie")
+COOKIE: Final[str] = os.path.join(get_config_dir(), "cookie")
 
 _work: Work | None = None
 
 
-def get_work(config_dir: str | None = None) -> Work | None:
+def get_work(work_toml: str | None = None) -> Work | None:
     """Load work config
 
-    Load work config from config_dir.
+    Load work config
     Result is caches.
     """
     if _work:
         return _work
-    config_dir = config_dir or find_config_dir()
-    work_file = os.path.join(config_dir, WORK_FILENAME)
+    work_file = work_toml or os.path.join(get_config_dir(), WORK_FILENAME)
     try:
         with open(work_file, "r") as f:
             config = toml.load(f)
             return Work(**config)
-    except Exception:
+    except FileNotFoundError:
+        logger.error(f"{work_file} not found")
+        return None
+    except toml.TomlDecodeError as e:
+        logger.error(f"Error decoding TOML: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error: {e}")
         return None
 
 
 _work = get_work()
 
-os.makedirs(CONFIG_DIR, exist_ok=True)
+os.makedirs(get_config_dir(), exist_ok=True)
