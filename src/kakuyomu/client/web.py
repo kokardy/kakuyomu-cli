@@ -18,10 +18,10 @@ class Client:
     """Web client for kakuyomu"""
 
     session: requests.Session
-    cookie_path: requests.cookies.RequestsCookieJar
+    cookie_path: str
     config_dir: str
 
-    def __init__(self, *, config_dir: str = get_config_dir(), cookie_path: str = ""):
+    def __init__(self, *, config_dir: str = get_config_dir(), cookie_path: str|None = None) -> None:
         """Initialize web client"""
         self.session = requests.Session()
         self.config_dir = config_dir
@@ -65,10 +65,9 @@ class Client:
 
     def logout(self) -> None:
         """Logout"""
-        cookie = self.cookie_path
         self.session.cookies.clear()
-        if os.path.exists(cookie):
-            os.remove(cookie)
+        if os.path.exists(self.cookie_path):
+            os.remove(self.cookie_path)
 
     def login(self) -> None:
         """Login"""

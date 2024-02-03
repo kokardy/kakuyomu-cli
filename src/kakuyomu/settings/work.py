@@ -16,9 +16,9 @@ logger = get_logger()
 @lru_cache
 def find_work_dir() -> str:
     """
-    Find work dir
+    Find work config dir
 
-    Find work dir from current working directory.
+    Find work config dir from current working directory.
     """
     cwd = os.getcwd()
     while True:
@@ -37,7 +37,7 @@ def get_config_dir() -> str:
     """
     Find config_dir
 
-    Find config_dir from work dir.
+    Find config_dir from current work dir.
     """
     root = find_work_dir()
     return os.path.join(root, CONFIG_DIRNAME)
