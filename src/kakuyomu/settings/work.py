@@ -2,7 +2,6 @@
 
 import os
 from functools import lru_cache
-from typing import Final
 
 import toml
 
@@ -16,9 +15,10 @@ logger = get_logger()
 
 @lru_cache
 def find_work_dir() -> str:
-    """Find work dir
+    """
+    Find work config dir
 
-    Find work dir from current working directory.
+    Find work config dir from current working directory.
     """
     cwd = os.getcwd()
     while True:
@@ -34,21 +34,27 @@ def find_work_dir() -> str:
 
 @lru_cache
 def get_config_dir() -> str:
-    """Find config_dir
+    """
+    Find config_dir
 
-    Find config_dir from work dir.
+    Find config_dir from current work dir.
     """
     root = find_work_dir()
     return os.path.join(root, CONFIG_DIRNAME)
 
 
-COOKIE: Final[str] = os.path.join(get_config_dir(), "cookie")
+@lru_cache
+def get_cookie_path(config_dir: str = get_config_dir()) -> str:
+    """Get cookie path"""
+    return os.path.join(config_dir, "cookie")
+
 
 _work: Work | None = None
 
 
 def get_work(work_toml: str | None = None) -> Work | None:
-    """Load work config
+    """
+    Load work config
 
     Load work config
     Result is caches.
