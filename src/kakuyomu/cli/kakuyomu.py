@@ -1,4 +1,5 @@
-"""Kakuyomu CLI
+"""
+Kakuyomu CLI
 
 Command line interface for kakuyomu.jp
 """
@@ -11,7 +12,8 @@ client = Client()
 
 @click.group()
 def cli() -> None:
-    """Kakuyomu CLI
+    """
+    Kakuyomu CLI
 
     Command line interface for kakuyomu.jp
     """
