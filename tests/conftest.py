@@ -1,9 +1,11 @@
+"""Global configuration for pytest"""
 import coloredlogs
 
 from kakuyomu.logger import get_logger
 
 
 def set_color() -> None:
+    """Set color for logger"""
     coloredlogs.DEFAULT_LEVEL_STYLES = {
         "critical": {"color": "red", "bold": True},
         "error": {"color": "red"},

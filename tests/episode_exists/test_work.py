@@ -3,7 +3,7 @@
 from kakuyomu.client import Client
 from kakuyomu.types import Episode, Work
 
-from .helper import Test
+from ..helper import Test
 
 work = Work(
     id="16816927859498193192",

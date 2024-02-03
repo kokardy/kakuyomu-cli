@@ -1,7 +1,7 @@
 """Test for login"""
 from kakuyomu.client import Client
 
-from .helper import Test
+from ..helper import Test
 
 
 class TestLogin(Test):
