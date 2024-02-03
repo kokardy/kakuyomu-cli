@@ -1,4 +1,5 @@
-"""Web client for kakuyomu
+"""
+Web client for kakuyomu
 
 This module is a web client for kakuyomu.jp.
 """
@@ -9,7 +10,7 @@ import requests
 
 from kakuyomu.scrapers.my_page import MyPageScraper
 from kakuyomu.scrapers.work_page import WorkPageScraper
-from kakuyomu.settings import COOKIE, URL, Login, get_work
+from kakuyomu.settings import URL, Login, get_config_dir, get_cookie_path, get_work
 from kakuyomu.types import Episode, EpisodeId, LoginStatus, Work, WorkId
 
 
@@ -17,11 +18,14 @@ class Client:
     """Web client for kakuyomu"""
 
     session: requests.Session
-    cookie: requests.cookies.RequestsCookieJar
+    cookie_path: requests.cookies.RequestsCookieJar
+    config_dir: str
 
-    def __init__(self, cookie_path: str = COOKIE):
+    def __init__(self, *, config_dir: str = get_config_dir(), cookie_path: str = ""):
         """Initialize web client"""
         self.session = requests.Session()
+        self.config_dir = config_dir
+        self.cookie_path = cookie_path or get_cookie_path(config_dir)
         cookies = self._load_cookie(cookie_path)
         if cookies:
             self.session.cookies = cookies
@@ -61,9 +65,10 @@ class Client:
 
     def logout(self) -> None:
         """Logout"""
+        cookie = self.cookie_path
         self.session.cookies.clear()
-        if os.path.exists(COOKIE):
-            os.remove(COOKIE)
+        if os.path.exists(cookie):
+            os.remove(cookie)
 
     def login(self) -> None:
         """Login"""
@@ -77,8 +82,7 @@ class Client:
         res = self._post(URL.LOGIN, data=data, headers=headers)
 
         # save cookie to a file
-        filepath = COOKIE
-        with open(filepath, "wb") as f:
+        with open(self.cookie_path, "wb") as f:
             pickle.dump(res.cookies, f)
 
     def get_works(self) -> dict[WorkId, Work]:
