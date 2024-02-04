@@ -7,6 +7,7 @@ from kakuyomu.logger import get_logger
 logger = get_logger()
 CONFIG_DIRNAME: Final[str] = ".kakuyomu"
 WORK_FILENAME: Final[str] = "work.toml"
+COOKIE_FILENAME: Final[str] = "cookie"
 
 
 class ConstMeta(type):
