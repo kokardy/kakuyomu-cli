@@ -1,6 +1,6 @@
 """settings"""
 
-from .const import CONFIG_DIRNAME, URL, WORK_FILENAME, Login, COOKIE_FILENAME
+from .const import CONFIG_DIRNAME, COOKIE_FILENAME, URL, WORK_FILENAME, Login
 
 __all__ = [
     "CONFIG_DIRNAME",
