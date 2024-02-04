@@ -1,11 +1,12 @@
 """テスト用のヘルパー関数を定義するモジュール"""
+import enum
 import logging
 from typing import Callable
+
 import coloredlogs
 
-from kakuyomu.logger import get_logger
 from kakuyomu.client import Client
-import enum
+from kakuyomu.logger import get_logger
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -13,12 +14,11 @@ logger.setLevel(logging.DEBUG)
 handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)
 
+
 class Case(enum.Enum):
     """Test case"""
 
     NO_WORK_TOML = "no_work_toml"
-    NO_WORK_ID = "no_work_id"
-    NO_WORK_TITLE = "no_work_title"
     NO_EPISODES = "no_episodes"
 
 
@@ -34,10 +34,13 @@ def createClient(case: Case) -> Client:
 class Test:
     """テスト毎にテスト名を表示する"""
 
+    def teardown_method(self, method: Callable[..., None]) -> None:
+        """テストメソッドの後にテスト名を表示する"""
+        logger.debug(f"\n========== END {self.__class__} method: {method.__name__} ============")
+
     def setup_method(self, method: Callable[..., None]) -> None:
         """テストメソッドの前にテスト名を表示する"""
-        logger.debug(f"\n========== {self.__class__} method: {method.__name__} ============")
-
+        logger.debug(f"\n========== START {self.__class__} method: {method.__name__} ============")
 
 
 def set_color() -> None:

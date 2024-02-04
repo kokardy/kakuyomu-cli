@@ -1,14 +1,16 @@
 """Test for initialize"""
 
-import pytest
 import os
 from io import StringIO
+from typing import Callable
 
+import pytest
+
+from kakuyomu.client import Client
 from kakuyomu.types import Work
 from kakuyomu.types.errors import TOMLAlreadyExists
 
 from ..helper import Case, Test, createClient
-
 
 work = Work(
     id="16816927859498193192",
@@ -19,43 +21,46 @@ work = Work(
 class TestInitialize(Test):
     """Test for initialize"""
 
+    client: Client
+
+    # initialize class
+    def setup_class(self) -> None:
+        """Create client with no work.toml file."""
+        self.client = createClient(case=Case.NO_WORK_TOML)
+
+    # run before all test functions
+    def setup_method(self, method: Callable[..., None]) -> None:
+        """Create client"""
+        super().setup_method(method)
+        if os.path.exists(self.client.work_toml_path):
+            os.remove(self.client.work_toml_path)
+
+    # run after all test functions
+    def teardown_method(self, method: Callable[..., None]) -> None:
+        """Delete toml file"""
+        super().teardown_method(method)
+        if os.path.exists(self.client.work_toml_path):
+            os.remove(self.client.work_toml_path)
+
     def test_init_no_toml(self, monkeypatch):
         """Test kakuyomu init"""
         # mock stdin
         # select work number: 0
         monkeypatch.setattr("sys.stdin", StringIO("0\n"))
-        case = Case.NO_WORK_TOML
+        self.client.initialize_work()
 
-        client = createClient(case=case)
-        if os.path.exists(client.work_toml_path):
-            os.remove(client.work_toml_path)
-
-        client.initialize_work()
-
-        assert client.work_toml_path
-        assert os.path.exists(client.work_toml_path)
-
-        # new client
-        client = createClient(case=case)
-        assert client.work.id == work.id
-
-        # after
-        os.remove(client.work_toml_path)
-        assert not os.path.exists(client.work_toml_path)
+        assert os.path.exists(self.client.work_toml_path)
+        assert self.client.work.id == work.id
 
     def test_init_toml_already_exists(self, monkeypatch):
         """Test kakuyomu init already exists"""
-        case = Case.NO_WORK_TOML
         # mock stdin
         # select work number: 0
         monkeypatch.setattr("sys.stdin", StringIO("0\n"))
-        client = createClient(case=case)
-        client.initialize_work()
+        self.client.initialize_work()
 
-        assert client.work_toml_path
-        assert os.path.exists(client.work_toml_path)
+        assert os.path.exists(self.client.work_toml_path)
 
         # raise error already exists
-        client = createClient(case=case)
         with pytest.raises(TOMLAlreadyExists):
-            client.initialize_work()
+            self.client.initialize_work()
