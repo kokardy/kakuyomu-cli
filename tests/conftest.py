@@ -1,26 +1,34 @@
 """Global configuration for pytest"""
-import coloredlogs
-
-from kakuyomu.logger import get_logger
 
 
-def set_color() -> None:
-    """Set color for logger"""
-    coloredlogs.DEFAULT_LEVEL_STYLES = {
-        "critical": {"color": "red", "bold": True},
-        "error": {"color": "red"},
-        "warning": {"color": "yellow"},
-        "notice": {"color": "magenta"},
-        "info": {},
-        "debug": {"color": "green"},
-        "spam": {"color": "green", "faint": True},
-        "success": {"color": "green", "bold": True},
-        "verbose": {"color": "blue"},
-    }
-    logger = get_logger()
-    coloredlogs.install(level="INFO", logger=logger, fmt="%(asctime)s : %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
-    coloredlogs.install(level="DEBUG", logger=logger, fmt="%(asctime)s : %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
-    coloredlogs.install(level="WARN", logger=logger, fmt="%(asctime)s : %(message)s", datefmt="%Y/%m/%d %H:%M:%S")
+import pytest
 
+from kakuyomu.client.web import Client
+
+from .helper import Case, createClient, set_color
 
 set_color()
+
+
+@pytest.fixture(scope="class")
+def client() -> Client:
+    """Get client"""
+    client = createClient(Case.NO_WORK_TOML)
+    client.login()
+    return client
+
+
+@pytest.fixture(scope="function")
+def login_client() -> Client:
+    """Get login client"""
+    client = createClient(Case.NO_WORK_TOML)
+    client.login()
+    return client
+
+
+@pytest.fixture(scope="function")
+def logout_client() -> Client:
+    """Get logout client"""
+    client = createClient(Case.NO_WORK_TOML)
+    client.logout()
+    return client
