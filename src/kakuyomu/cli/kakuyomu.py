@@ -50,11 +50,24 @@ def works() -> None:
         print(work)
 
 
-@cli.command()
-def episodes() -> None:
-    """List episodes titles"""
-    for episode in client.get_episodes().values():
-        print(episode)
+@cli.group()
+def episode() -> None:
+    """Episode commands"""
+    pass
+
+
+@episode.command()
+def ls() -> None:
+    """List episode titles"""
+    for i, episode in enumerate(client.get_episodes().values()):
+        print(i, episode)
+
+
+@episode.command()
+def link() -> None:
+    """Link episodes"""
+    # client.link_episodes()
+    print("linked")
 
 
 @cli.command()
