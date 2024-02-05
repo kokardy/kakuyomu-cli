@@ -115,11 +115,10 @@ class Client:
         return works
 
     @require_work
-    def get_episodes(self, work_id: WorkId = "") -> dict[EpisodeId, Episode]:
+    def get_episodes(self) -> dict[EpisodeId, Episode]:
         """Get episodes"""
         assert self.work  # require_work decorator assures work is not None
-        if not work_id:
-            work_id = self.work.id
+        work_id = self.work.id
         res = self._get(URL.MY_WORK.format(work_id=work_id))
         html = res.text
         episodes = WorkPageScraper(html).scrape_episodes()
@@ -151,8 +150,7 @@ class Client:
         """Initialize work"""
         filepath = self.work_toml_path
         if os.path.exists(filepath):
-            logger.error(f"work toml {filepath=} already exists. {self.work}")
-            return
+            logger.info(f"work toml {filepath=} already exists. override {work}")
 
         with open(filepath, "w") as f:
             toml.dump(work.model_dump(), f)
