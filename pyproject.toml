@@ -1,6 +1,6 @@
 [project]
 name = "kakuyomu-cli"
-version = "0.4.1"
+version = "0.5.0"
 description = "Kakuyomu CLI"
 authors = [{ name = "kokardy", email = "mgc1028@gmail.com" }]
 dependencies = [

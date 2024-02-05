@@ -7,11 +7,16 @@ import os
 import pickle
 
 import requests
+import toml
 
+from kakuyomu.logger import get_logger
 from kakuyomu.scrapers.my_page import MyPageScraper
 from kakuyomu.scrapers.work_page import WorkPageScraper
-from kakuyomu.settings import URL, Login, get_config_dir, get_cookie_path, get_work
+from kakuyomu.settings import CONFIG_DIRNAME, COOKIE_FILENAME, URL, WORK_FILENAME, Login
 from kakuyomu.types import Episode, EpisodeId, LoginStatus, Work, WorkId
+from kakuyomu.types.errors import TOMLAlreadyExists
+
+logger = get_logger()
 
 
 class Client:
@@ -20,13 +25,15 @@ class Client:
     session: requests.Session
     cookie_path: str
     config_dir: str
+    work_toml_path: str
 
-    def __init__(self, *, config_dir: str = get_config_dir(), cookie_path: str|None = None) -> None:
+    def __init__(self, cwd: str = os.getcwd()) -> None:
         """Initialize web client"""
         self.session = requests.Session()
-        self.config_dir = config_dir
-        self.cookie_path = cookie_path or get_cookie_path(config_dir)
-        cookies = self._load_cookie(cookie_path)
+        self.config_dir = self._config_dir(cwd)
+        self.work_toml_path = os.path.join(self.config_dir, WORK_FILENAME)
+        self.cookie_path = os.path.join(self.config_dir, COOKIE_FILENAME)
+        cookies = self._load_cookie(self.cookie_path)
         if cookies:
             self.session.cookies = cookies
 
@@ -44,7 +51,7 @@ class Client:
     @property
     def work(self) -> Work:
         """Load work"""
-        work = get_work()
+        work = self._load_work_toml()
         if work is None:
             raise ValueError("work is not set")
         return work
@@ -54,6 +61,10 @@ class Client:
 
     def _post(self, url: str, **kwargs) -> requests.Response:  # type: ignore
         return self.session.post(url, **kwargs)
+
+    def _remove_cookie(self) -> None:
+        if os.path.exists(self.cookie_path):
+            os.remove(self.cookie_path)
 
     def status(self) -> LoginStatus:
         """Get login status"""
@@ -66,8 +77,7 @@ class Client:
     def logout(self) -> None:
         """Logout"""
         self.session.cookies.clear()
-        if os.path.exists(self.cookie_path):
-            os.remove(self.cookie_path)
+        self._remove_cookie()
 
     def login(self) -> None:
         """Login"""
@@ -99,3 +109,75 @@ class Client:
         html = res.text
         episodes = WorkPageScraper(html).scrape_episodes()
         return episodes
+
+    def initialize_work(self) -> None:
+        """Initialize work"""
+        # check if work toml already exists
+        if _work := self._load_work_toml():
+            logger.error(f"work toml already exists. {_work}")
+            raise TOMLAlreadyExists(f"work.tomlはすでに存在します {_work}")
+
+        works = self.get_works()
+        work_list = list(works.values())
+        for i, work in enumerate(work_list):
+            print(f"{i}: {work}")
+
+        try:
+            number = int(input("タイトルを数字で選択してください: "))
+            work = work_list[number]
+            self._dump_work_toml(work)
+        except ValueError:
+            raise ValueError("数字を入力してください")
+        except IndexError:
+            raise ValueError("選択された番号が存在しません")
+
+    def _dump_work_toml(self, work: Work) -> None:
+        """Initialize work"""
+        filepath = self.work_toml_path
+        if os.path.exists(filepath):
+            _work = self._load_work_toml()
+            logger.error(f"work toml {filepath=} already exists. {_work}")
+            return
+
+        with open(filepath, "w") as f:
+            toml.dump(work.model_dump(), f)
+
+        logger.info(f"dump work toml: {work}")
+
+    def _load_work_toml(self) -> Work | None:
+        """
+        Load work config
+
+        Load work config
+        Result is caches.
+        """
+        try:
+            with open(self.work_toml_path, "r") as f:
+                config = toml.load(f)
+                return Work(**config)
+        except FileNotFoundError:
+            logger.info(f"{self.work_toml_path} not found")
+            return None
+        except toml.TomlDecodeError as e:
+            logger.error(f"Error decoding TOML: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Unexpected error: {e}")
+            return None
+
+    def _config_dir(self, cwd: str) -> str:
+        """
+        Find work config dir
+
+        Find work config dir from current working directory.
+        """
+        while True:
+            path = os.path.join(cwd, CONFIG_DIRNAME)
+            if os.path.exists(path):
+                if os.path.isdir(path):
+                    logger.info(f"work dir found: {cwd}")
+                    config_dir = os.path.join(cwd, CONFIG_DIRNAME)
+                    return config_dir
+            cwd = os.path.dirname(cwd)
+            if os.path.abspath(cwd) == os.path.abspath(os.path.sep):
+                raise FileNotFoundError(f"{CONFIG_DIRNAME} not found")

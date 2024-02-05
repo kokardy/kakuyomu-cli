@@ -3,11 +3,14 @@ Kakuyomu CLI
 
 Command line interface for kakuyomu.jp
 """
+import os
+
 import click
 
 from kakuyomu.client import Client
+from kakuyomu.types.errors import TOMLAlreadyExists
 
-client = Client()
+client = Client(os.getcwd())
 
 
 @click.group()
@@ -52,6 +55,19 @@ def episodes() -> None:
     """List episodes titles"""
     for episode in client.get_episodes().values():
         print(episode)
+
+
+@cli.command()
+def init() -> None:
+    """Initialize work toml"""
+    try:
+        client.initialize_work()
+    except TOMLAlreadyExists as e:
+        print(e)
+    except ValueError as e:
+        print(f"Invalid input: {e}")
+    except Exception as e:
+        print(f"unexpected error: {e}")
 
 
 def main() -> None:
