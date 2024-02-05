@@ -1,7 +1,6 @@
 """テスト用のヘルパー関数を定義するモジュール"""
 import enum
 import logging
-from typing import Callable
 
 import coloredlogs
 
@@ -29,18 +28,6 @@ def createClient(case: Case) -> Client:
     if not client.status().is_login:
         client.login()
     return client
-
-
-class Test:
-    """テスト毎にテスト名を表示する"""
-
-    def teardown_method(self, method: Callable[..., None]) -> None:
-        """テストメソッドの後にテスト名を表示する"""
-        logger.debug(f"\n========== END {self.__class__} method: {method.__name__} ============")
-
-    def setup_method(self, method: Callable[..., None]) -> None:
-        """テストメソッドの前にテスト名を表示する"""
-        logger.debug(f"\n========== START {self.__class__} method: {method.__name__} ============")
 
 
 def set_color() -> None:

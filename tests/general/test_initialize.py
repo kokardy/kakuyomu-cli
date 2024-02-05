@@ -2,15 +2,13 @@
 
 import os
 from io import StringIO
-from typing import Callable
 
 import pytest
 
-from kakuyomu.client import Client
 from kakuyomu.types import Work
 from kakuyomu.types.errors import TOMLAlreadyExists
 
-from ..helper import Case, Test, createClient
+from ..helper import WorkTOMLNotExistsTest
 
 work = Work(
     id="16816927859498193192",
@@ -18,29 +16,8 @@ work = Work(
 )
 
 
-class TestInitialize(Test):
+class TestInitialize(WorkTOMLNotExistsTest):
     """Test for initialize"""
-
-    client: Client
-
-    # initialize class
-    def setup_class(self) -> None:
-        """Create client with no work.toml file."""
-        self.client = createClient(case=Case.NO_WORK_TOML)
-
-    # run before all test functions
-    def setup_method(self, method: Callable[..., None]) -> None:
-        """Create client"""
-        super().setup_method(method)
-        if os.path.exists(self.client.work_toml_path):
-            os.remove(self.client.work_toml_path)
-
-    # run after all test functions
-    def teardown_method(self, method: Callable[..., None]) -> None:
-        """Delete toml file"""
-        super().teardown_method(method)
-        if os.path.exists(self.client.work_toml_path):
-            os.remove(self.client.work_toml_path)
 
     def test_init_no_toml(self, monkeypatch):
         """Test kakuyomu init"""
