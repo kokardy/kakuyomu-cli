@@ -5,6 +5,7 @@ This module is a web client for kakuyomu.jp.
 """
 import os
 import pickle
+import traceback
 
 import requests
 import toml
@@ -15,6 +16,8 @@ from kakuyomu.scrapers.work_page import WorkPageScraper
 from kakuyomu.settings import CONFIG_DIRNAME, COOKIE_FILENAME, URL, WORK_FILENAME, Login
 from kakuyomu.types import Episode, EpisodeId, LoginStatus, Work, WorkId
 from kakuyomu.types.errors import TOMLAlreadyExists
+
+from .decorators import require_login, require_work
 
 logger = get_logger()
 
@@ -30,7 +33,11 @@ class Client:
     def __init__(self, cwd: str = os.getcwd()) -> None:
         """Initialize web client"""
         self.session = requests.Session()
-        self.config_dir = self._config_dir(cwd)
+        try:
+            self.config_dir = self._get_config_dir(cwd)
+        except FileNotFoundError as e:
+            logger.info(f"{e} {CONFIG_DIRNAME=} not found")
+            self.config_dir = os.path.join(cwd, CONFIG_DIRNAME)
         self.work_toml_path = os.path.join(self.config_dir, WORK_FILENAME)
         self.cookie_path = os.path.join(self.config_dir, COOKIE_FILENAME)
         cookies = self._load_cookie(self.cookie_path)
@@ -49,11 +56,11 @@ class Client:
             return None
 
     @property
-    def work(self) -> Work:
+    def work(self) -> Work | None:
         """Load work"""
         work = self._load_work_toml()
-        if work is None:
-            raise ValueError("work is not set")
+        if not work:
+            logger.info("work is not set")
         return work
 
     def _get(self, url: str, **kwargs) -> requests.Response:  # type: ignore
@@ -66,13 +73,16 @@ class Client:
         if os.path.exists(self.cookie_path):
             os.remove(self.cookie_path)
 
+    def _set_config_dir(self, config_dir: str) -> None:
+        self.config_dir = config_dir
+
     def status(self) -> LoginStatus:
         """Get login status"""
         res = self._get(URL.MY)
         if res.text.find("ログイン") != -1:
             return LoginStatus(is_login=False, email="")
         else:
-            return LoginStatus(is_login=True, email="Config.EMAIL_ADDRESS")
+            return LoginStatus(is_login=True, email=f"{ Login.EMAIL_ADDRESS }")
 
     def logout(self) -> None:
         """Logout"""
@@ -91,9 +101,12 @@ class Client:
         res = self._post(URL.LOGIN, data=data, headers=headers)
 
         # save cookie to a file
+        if not os.path.exists(self.config_dir):
+            os.mkdir(self.config_dir)
         with open(self.cookie_path, "wb") as f:
             pickle.dump(res.cookies, f)
 
+    @require_login
     def get_works(self) -> dict[WorkId, Work]:
         """Get works"""
         res = self._get(URL.MY)
@@ -101,8 +114,10 @@ class Client:
         works = MyPageScraper(html).scrape_works()
         return works
 
+    @require_work
     def get_episodes(self, work_id: WorkId = "") -> dict[EpisodeId, Episode]:
         """Get episodes"""
+        assert self.work  # require_work decorator assures work is not None
         if not work_id:
             work_id = self.work.id
         res = self._get(URL.MY_WORK.format(work_id=work_id))
@@ -110,12 +125,13 @@ class Client:
         episodes = WorkPageScraper(html).scrape_episodes()
         return episodes
 
+    @require_login
     def initialize_work(self) -> None:
         """Initialize work"""
         # check if work toml already exists
-        if _work := self._load_work_toml():
-            logger.error(f"work toml already exists. {_work}")
-            raise TOMLAlreadyExists(f"work.tomlはすでに存在します {_work}")
+        if os.path.exists(self.work_toml_path):
+            logger.error(f"work toml already exists. {self.work}")
+            raise TOMLAlreadyExists(f"work.tomlはすでに存在します {self.work}")
 
         works = self.get_works()
         work_list = list(works.values())
@@ -135,8 +151,7 @@ class Client:
         """Initialize work"""
         filepath = self.work_toml_path
         if os.path.exists(filepath):
-            _work = self._load_work_toml()
-            logger.error(f"work toml {filepath=} already exists. {_work}")
+            logger.error(f"work toml {filepath=} already exists. {self.work}")
             return
 
         with open(filepath, "w") as f:
@@ -162,10 +177,11 @@ class Client:
             logger.error(f"Error decoding TOML: {e}")
             return None
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
+            logger.error(f"unexpected error: {e}")
+            traceback.print_stack()
             return None
 
-    def _config_dir(self, cwd: str) -> str:
+    def _get_config_dir(self, cwd: str) -> str:
         """
         Find work config dir
 

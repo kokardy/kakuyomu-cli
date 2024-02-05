@@ -8,20 +8,19 @@ Command line interface for kakuyomu.jp writers.
 
 `kakuyomu --help`
 
-```
-Usage: kakuyomu [OPTIONS] COMMAND [ARGS]...
+# Commands
 
-  Kakuyomu CLI
+| command | description          |
+| -----   | ----                 |
+| episode | Episode commands     |
+| init    | Initialize work toml |
+| login   | Login                |
+| logout  | Logout               |
+| status  | Show login status    |
+| works   | List work titles     |
 
-  Command line interface for kakuyomu.jp
+## usage
 
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  episodes  List episodes titles
-  login     Login
-  logout    Logout
-  status    Show login status
-  works     List work titles
-```
+1.  小説のルートディレクトリに移動
+2.  ログイン `kakuyomu login`
+3.  初期設定 `kakuyomu init` 小説を選択
