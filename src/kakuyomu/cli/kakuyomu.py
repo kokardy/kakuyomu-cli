@@ -20,7 +20,6 @@ def cli() -> None:
 
     Command line interface for kakuyomu.jp
     """
-    pass
 
 
 @cli.command()
@@ -78,9 +77,9 @@ def init() -> None:
     except TOMLAlreadyExists as e:
         print(e)
     except ValueError as e:
-        print(f"Invalid input: {e}")
+        print(f"不正な入力値: {e}")
     except Exception as e:
-        print(f"unexpected error: {e}")
+        print(f"予期しないエラー: {e}")
 
 
 def main() -> None:

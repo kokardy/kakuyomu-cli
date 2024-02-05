@@ -19,6 +19,7 @@ class Case(enum.Enum):
 
     NO_WORK_TOML = "no_work_toml"
     NO_EPISODES = "no_episodes"
+    EPISODES_EXISTS = "episodes_exists"
 
 
 def createClient(case: Case) -> Client:
