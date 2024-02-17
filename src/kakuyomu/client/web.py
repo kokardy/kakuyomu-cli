@@ -5,7 +5,6 @@ This module is a web client for kakuyomu.jp.
 """
 import os
 import pickle
-import traceback
 
 import requests
 import toml
@@ -136,6 +135,7 @@ class Client:
         """Link file"""
         assert self.work  # require_work decorator assures work is not None
         episodes = self.get_episodes()
+        local_episode: LocalEpisode
         for i, remote_episode in enumerate(episodes):
             print(f"{i}: {remote_episode}")
         try:
@@ -162,7 +162,7 @@ class Client:
         assert self.work  # require_work decorator assures work is not None
         assert episode
         work = self.work  # copy property to local variable
-        result: LocalEpisode
+        result: LocalEpisode | None = None
         if another_episode := self.get_episode_by_path(filepath):
             logger.error(f"same path{ another_episode= }")
             raise EpisodeAlreadyLinkedError(f"同じファイルパスが既にリンクされています: {another_episode}")
@@ -174,9 +174,10 @@ class Client:
                 break
         else:
             episode.path = filepath
-            work.episodes.append(episode)
+            local_episode = LocalEpisode(**episode.model_dump())
+            work.episodes.append(local_episode)
             logger.info(f"append episode: {episode}")
-            result = episode
+            result = local_episode
         self._dump_work_toml(work)
         return result
 
@@ -300,8 +301,7 @@ class Client:
             return None
         except Exception as e:
             logger.error(f"unexpected error: {e}")
-            traceback.print_stack()
-            return None
+            raise e
 
     def _get_config_dir(self, cwd: str) -> str:
         """
