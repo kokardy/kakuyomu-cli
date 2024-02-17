@@ -42,7 +42,7 @@ class TestEpisodeNoEpisode(NoEpisodesTest):
         self.client.link_file(file_path)
         assert file_path in {episode.path for episode in self.client.work.episodes}
 
-    def test_same_path_error(self, monkeypatch) -> None:
+    def test_same_path_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Same path error test"""
         monkeypatch.setattr("sys.stdin", StringIO("1\n1\n"))
         assert self.client.work
@@ -57,7 +57,7 @@ class TestEpisodeNoEpisode(NoEpisodesTest):
 class TestEpisodeEpisodesExist(EpisodeExistsTest):
     """Test in the case that Episode exists test"""
 
-    def test_episode_unlink(self, monkeypatch) -> None:
+    def test_episode_unlink(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Episode unlink test"""
         # select a episode which has a path
         monkeypatch.setattr("sys.stdin", StringIO("1\n"))
@@ -69,7 +69,7 @@ class TestEpisodeEpisodesExist(EpisodeExistsTest):
         unlinked_episode = self.client.get_episode_by_id(episode.id)
         assert unlinked_episode.path is None
 
-    def test_episode_unlink_no_path(self, monkeypatch) -> None:
+    def test_episode_unlink_no_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Episode unlink no path test"""
         # select a episode which has no path
         monkeypatch.setattr("sys.stdin", StringIO("2\n"))

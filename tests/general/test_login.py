@@ -43,6 +43,6 @@ class TestLogin(Test):
         """Episode list test"""
         episodes = client.get_episodes()
         assert episode.id in {episodes.id for episodes in episodes}
-        index = episodes.index(episode)
+        index = [episode.id for episode in episodes].index(episode.id)
         assert index > -1
         assert episodes[index].title == episode.title

@@ -14,7 +14,7 @@ class Episode(BaseModel):
     id: EpisodeId
     title: str
 
-    def same_id(self, other: "LocalEpisode") -> bool:
+    def same_id(self, other: "Episode") -> bool:
         """Check if the id is the same"""
         return self.id == other.id
 
