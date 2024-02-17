@@ -8,7 +8,7 @@ import os
 import click
 
 from kakuyomu.client import Client
-from kakuyomu.types.errors import TOMLAlreadyExists
+from kakuyomu.types.errors import TOMLAlreadyExistsError
 
 client = Client(os.getcwd())
 
@@ -20,7 +20,6 @@ def cli() -> None:
 
     Command line interface for kakuyomu.jp
     """
-    pass
 
 
 @cli.command()
@@ -44,36 +43,13 @@ def login() -> None:
 
 
 @cli.command()
-def works() -> None:
-    """List work titles"""
-    for work in client.get_works().values():
-        print(work)
-
-
-@cli.command()
-def episodes() -> None:
-    """List episodes titles"""
-    for episode in client.get_episodes().values():
-        print(episode)
-
-
-@cli.command()
 def init() -> None:
     """Initialize work toml"""
     try:
         client.initialize_work()
-    except TOMLAlreadyExists as e:
+    except TOMLAlreadyExistsError as e:
         print(e)
     except ValueError as e:
-        print(f"Invalid input: {e}")
+        print(f"不正な入力値: {e}")
     except Exception as e:
-        print(f"unexpected error: {e}")
-
-
-def main() -> None:
-    """CLI entry point"""
-    cli()
-
-
-if __name__ == "__main__":
-    main()
+        print(f"予期しないエラー: {e}")

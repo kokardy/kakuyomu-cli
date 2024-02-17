@@ -1,6 +1,6 @@
 [project]
 name = "kakuyomu-cli"
-version = "0.5.0"
+version = "0.6.0"
 description = "Kakuyomu CLI"
 authors = [{ name = "kokardy", email = "mgc1028@gmail.com" }]
 dependencies = [
@@ -16,7 +16,7 @@ dependencies = [
 readme = "README.md"
 requires-python = ">= 3.12"
 [project.scripts]
-kakuyomu = "kakuyomu.cli.kakuyomu:main"
+kakuyomu = "kakuyomu.cli.main:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -38,6 +38,7 @@ dev-dependencies = [
     "types-beautifulsoup4>=4.12.0.20240106",
     "types-toml>=0.10.8.7",
     "types-requests>=2.31.0.20240106",
+    "pytest-mock>=3.12.0",
 ]
 
 [tool.hatch.metadata]
@@ -102,6 +103,7 @@ log_cli_level = "DEBUG"
 [tool.pyright]
 reportGeneralTypeIssues = false
 extraPaths = ["src", ".venv/lib/python3.12/site-packages"]
+pythonVersion = "3.12"
 
 [tool.rye.scripts]
 test = "pytest -s"
