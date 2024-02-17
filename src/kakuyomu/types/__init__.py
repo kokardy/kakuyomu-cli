@@ -1,11 +1,12 @@
 """Define type aliases and models."""
 
-from .work import Episode, EpisodeId, LoginStatus, Work, WorkId
+from .work import EpisodeId, LocalEpisode, LoginStatus, RemoteEpisode, Work, WorkId
 
 __all__ = [
     "Work",
     "WorkId",
-    "Episode",
+    "LocalEpisode",
     "EpisodeId",
     "LoginStatus",
+    "RemoteEpisode",
 ]

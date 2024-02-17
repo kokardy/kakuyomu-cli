@@ -9,11 +9,34 @@ EpisodeId: TypeAlias = str
 
 
 class Episode(BaseModel):
-    """Episode model"""
+    """Base episode model"""
 
     id: EpisodeId
     title: str
+
+    def same_id(self, other: "Episode") -> bool:
+        """Check if the id is the same"""
+        return self.id == other.id
+
+    def __str__(self) -> str:
+        """Return string representation of the episode"""
+        return f"{self.id}:{self.title}"
+
+
+class RemoteEpisode(Episode):
+    """Remote episode model"""
+
+    pass
+
+
+class LocalEpisode(Episode):
+    """Local episode model"""
+
     path: Optional[str] = None
+
+    def __str__(self) -> str:
+        """Return string representation of the episode"""
+        return f"{self.id}:{self.title} path={self.path}"
 
 
 class Work(BaseModel):
@@ -21,7 +44,7 @@ class Work(BaseModel):
 
     id: WorkId
     title: str
-    episodes: list[Episode] = []
+    episodes: list[LocalEpisode] = []
 
 
 class LoginStatus(BaseModel):
