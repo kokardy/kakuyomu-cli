@@ -1,7 +1,8 @@
 """Test for work"""
+import pytest
 
 from kakuyomu.client import Client
-from kakuyomu.types import Episode, Work
+from kakuyomu.types import Work
 
 from ..helper import Test
 
@@ -10,12 +11,8 @@ work = Work(
     title="アップロードテスト用",
 )
 
-episode = Episode(
-    id="16816927859880032697",
-    title="第4話",
-)
 
-
+@pytest.mark.usefixtures("fake_get_works")
 class TestWork(Test):
     """Test works and episodes"""
 

@@ -3,7 +3,7 @@ import os
 from typing import Callable, ClassVar
 
 from kakuyomu.client import Client
-from kakuyomu.types import Work
+from kakuyomu.types import LocalEpisode, Work
 
 from .functions import Case, createClient, logger
 
@@ -35,7 +35,7 @@ class Test:
 class WorkTOMLNotExistsTest(Test):
     """tomlファイルが存在しない場合のテスト"""
 
-    client: Client = None
+    client: Client
 
     # initialize class
     @classmethod
@@ -47,7 +47,7 @@ class WorkTOMLNotExistsTest(Test):
     def setup_method(self, method: Callable[..., None]) -> None:
         """作業ディレクトリにwork.tomlファイルが存在しない状態でClientを生成する"""
         super().setup_method(method)
-        if not self.client:
+        if "client" not in self.__dict__ or not self.client:
             self.client = createClient(case=Case.NO_WORK_TOML)
         # TOMLファイルが存在する場合は削除しておく
         if os.path.exists(self.client.work_toml_path):
@@ -65,7 +65,7 @@ class WorkTOMLNotExistsTest(Test):
 class NoEpisodesTest(Test):
     """エピソードが存在しない場合のテスト"""
 
-    client: Client = None
+    client: Client
 
     WORK: ClassVar[Work] = Work(
         id="16816927859498193192",
@@ -83,7 +83,7 @@ class NoEpisodesTest(Test):
     def setup_method(self, method: Callable[..., None]) -> None:
         """作業ディレクトリにwork.tomlファイルが存在する状態でClientを生成する"""
         super().setup_method(method)
-        if not self.client:
+        if "client" not in self.__dict__ or not self.client:
             self.client = createClient(case=Case.NO_EPISODES)
         # episodesが空のworkに置き換えておく
         self.client._dump_work_toml(self.__class__.WORK)
@@ -93,4 +93,53 @@ class NoEpisodesTest(Test):
         """残っているtomlファイルを削除する"""
         super().teardown_method(method)
         # episodesが空のworkに置き換えておく
+        self.client._dump_work_toml(self.__class__.WORK)
+
+
+class EpisodeExistsTest(Test):
+    """エピソードが存在する場合のテスト"""
+
+    client: Client
+
+    WORK: ClassVar[Work] = Work(
+        id="16816927859498193192",
+        title="アップロードテスト用",
+        episodes=[
+            LocalEpisode(
+                id="16816927859859822600",
+                title="第1話",
+                path="publish/001.txt",
+            ),
+            LocalEpisode(
+                id="16816927859880032697",
+                title="第4話",
+                path="publish/002.txt",
+            ),
+            LocalEpisode(
+                id="16816927859880026113",
+                title="第2話",
+            ),
+        ],
+    )
+
+    # initialize class
+    @classmethod
+    def setup_class(cls) -> None:
+        """テストクラスの初期化処理"""
+        super().setup_class()
+
+    # run before all test functions
+    def setup_method(self, method: Callable[..., None]) -> None:
+        """作業ディレクトリにwork.tomlファイルが存在する状態でClientを生成する"""
+        super().setup_method(method)
+        if "client" not in self.__dict__ or not self.client:
+            self.client = createClient(case=Case.EPISODES_EXISTS)
+        # episodesがある状態のworkに置き換えておく
+        self.client._dump_work_toml(self.__class__.WORK)
+
+    # run after all test functions
+    def teardown_method(self, method: Callable[..., None]) -> None:
+        """残っているtomlファイルを削除する"""
+        super().teardown_method(method)
+        # episodesがある状態のworkに置き換えておく
         self.client._dump_work_toml(self.__class__.WORK)
