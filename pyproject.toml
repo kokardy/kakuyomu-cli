@@ -16,7 +16,7 @@ dependencies = [
 readme = "README.md"
 requires-python = ">= 3.12"
 [project.scripts]
-kakuyomu = "kakuyomu.cli.kakuyomu:main"
+kakuyomu = "kakuyomu.cli.main:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -28,16 +28,17 @@ packages = ["src/kakuyomu"]
 [tool.rye]
 managed = true
 dev-dependencies = [
-  "pytest>=7.4.3",
-  "mypy>=1.8.0",
-  "ruff>=0.1.14",
-  "black>=23.12.1",
-  "isort>=5.13.2",
-  "coloredlog>=0.2.5",
-  "pre-commit>=3.6.0",
-  "types-beautifulsoup4>=4.12.0.20240106",
-  "types-toml>=0.10.8.7",
-  "types-requests>=2.31.0.20240106",
+    "pytest>=7.4.3",
+    "mypy>=1.8.0",
+    "ruff>=0.1.14",
+    "black>=23.12.1",
+    "isort>=5.13.2",
+    "coloredlog>=0.2.5",
+    "pre-commit>=3.6.0",
+    "types-beautifulsoup4>=4.12.0.20240106",
+    "types-toml>=0.10.8.7",
+    "types-requests>=2.31.0.20240106",
+    "pytest-mock>=3.12.0",
 ]
 
 [tool.hatch.metadata]
