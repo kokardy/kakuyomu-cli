@@ -1,6 +1,7 @@
 """Decorators for the client"""
 from typing import Callable, Concatenate, Self
 
+
 from kakuyomu.types.errors import NotLoginError, WorkNotSetError
 
 
