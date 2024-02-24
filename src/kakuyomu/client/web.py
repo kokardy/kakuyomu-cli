@@ -21,7 +21,7 @@ from kakuyomu.types.errors import (
     TOMLAlreadyExistsError,
 )
 
-from .decorators import require_login, require_work
+from .decorators import require_login
 
 logger = get_logger()
 
@@ -62,12 +62,9 @@ class Client:
             return None
 
     @property
-    def work(self) -> Work | None:
+    def work(self) -> Work:
         """Load work"""
-        work = self._load_work_toml()
-        if not work:
-            logger.info("work is not set")
-        return work
+        return self._load_work_toml()
 
     def _get(self, url: str, **kwargs) -> requests.Response:  # type: ignore
         return self.session.get(url, **kwargs)
@@ -120,20 +117,16 @@ class Client:
         works = MyPageScraper(html).scrape_works()
         return works
 
-    @require_work
     def get_episodes(self) -> list[RemoteEpisode]:
         """Get episodes"""
-        assert self.work  # require_work decorator assures work is not None
         work_id = self.work.id
         res = self._get(URL.MY_WORK.format(work_id=work_id))
         html = res.text
         episodes = WorkPageScraper(html).scrape_episodes()
         return episodes
 
-    @require_work
     def link_file(self, filepath: str) -> LocalEpisode:
         """Link file"""
-        assert self.work  # require_work decorator assures work is not None
         episodes = self.get_episodes()
         local_episode: LocalEpisode
         for i, remote_episode in enumerate(episodes):
@@ -156,10 +149,8 @@ class Client:
             logger.error(f"予期しないエラー: {e}")
             raise e
 
-    @require_work
     def _link_file(self, filepath: str, episode: RemoteEpisode) -> LocalEpisode:
         """Link file"""
-        assert self.work  # require_work decorator assures work is not None
         assert episode
         work = self.work  # copy property to local variable
         result: LocalEpisode | None = None
@@ -181,10 +172,8 @@ class Client:
         self._dump_work_toml(work)
         return result
 
-    @require_work
     def unlink(self) -> LocalEpisode:
         """Unlink episode"""
-        assert self.work  # require_work decorator assures work is not None
         work = self.work  # copy property to local variable
 
         for i, episode in enumerate(work.episodes):
@@ -200,16 +189,14 @@ class Client:
             raise e
         except ValueError as e:
             raise ValueError(f"数字を入力してください: {e}")
-        except IndexError as e :
+            raise ValueError("選択された番号がリストの範囲外です。もう一度確認してください。")
             raise ValueError(f"選択された番号が存在しません: {e}")
         except Exception as e:
             logger.error(f"予期しないエラー: {e}")
             raise e
 
-    @require_work
     def _unlink(self, episode_id: EpisodeId) -> LocalEpisode:
         """Unlink episode"""
-        assert self.work  # require_work decorator assures work is not None
         work = self.work  # copy property to local variable
         for episode in work.episodes:
             if episode.id == episode_id:
@@ -221,26 +208,21 @@ class Client:
         else:
             raise EpisodeNotFoundError(f"エピソードが見つかりません: {episode_id}")
 
-    @require_work
     def get_episode_by_id(self, episode_id: str) -> LocalEpisode:
         """Get episode by id"""
-        assert self.work  # require_work decorator assures work is not None
         for episode in self.work.episodes:
             if episode.id == episode_id:
                 return episode
         raise EpisodeNotFoundError(f"エピソードが見つかりません: {episode_id} {self.work.episodes}")
 
-    @require_work
     def get_episode_by_path(self, filepath: str) -> LocalEpisode | None:
         """Get episode by path"""
-        assert self.work  # require_work decorator assures work is not None
         logger.debug(f"local episodes: { self.work.episodes }")
         for episode in self.work.episodes:
             if episode.path == filepath:
                 return episode
         return None
 
-    @require_work
     def get_episode_by_remote_episode(self, remote_episode: RemoteEpisode) -> LocalEpisode:
         """Get episode by remote episode"""
         assert self.work
@@ -282,7 +264,7 @@ class Client:
 
         logger.info(f"dump work toml: {work}")
 
-    def _load_work_toml(self) -> Work | None:
+    def _load_work_toml(self) -> Work:
         """
         Load work config
 
@@ -293,12 +275,12 @@ class Client:
             with open(self.work_toml_path, "r") as f:
                 config = toml.load(f)
                 return Work(**config)
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             logger.info(f"{self.work_toml_path} not found")
-            return None
+            raise e
         except toml.TomlDecodeError as e:
             logger.error(f"Error decoding TOML: {e}")
-            return None
+            raise e
         except Exception as e:
             logger.error(f"unexpected error: {e}")
             raise e
