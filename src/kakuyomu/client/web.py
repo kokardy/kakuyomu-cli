@@ -189,7 +189,7 @@ class Client:
             raise e
         except ValueError as e:
             raise ValueError(f"数字を入力してください: {e}")
-        except IndexError as e:
+            raise ValueError("選択された番号がリストの範囲外です。もう一度確認してください。")
             raise ValueError(f"選択された番号が存在しません: {e}")
         except Exception as e:
             logger.error(f"予期しないエラー: {e}")
