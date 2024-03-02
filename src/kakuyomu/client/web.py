@@ -5,6 +5,7 @@ This module is a web client for kakuyomu.jp.
 """
 import os
 import pickle
+from typing import Iterable
 
 import requests
 import toml
@@ -15,6 +16,8 @@ from kakuyomu.scrapers.work_page import WorkPageScraper
 from kakuyomu.settings import CONFIG_DIRNAME, COOKIE_FILENAME, URL, WORK_FILENAME, Login
 from kakuyomu.types import EpisodeId, LocalEpisode, LoginStatus, RemoteEpisode, Work, WorkId
 from kakuyomu.types.errors import (
+    CreateEpisodeFailedError,
+    DeleteEpisodeFailedError,
     EpisodeAlreadyLinkedError,
     EpisodeHasNoPathError,
     EpisodeNotFoundError,
@@ -22,6 +25,8 @@ from kakuyomu.types.errors import (
 )
 
 from .decorators import require_login
+from .request_models import CreateEpisodeRequest
+from .toc import TOCAction
 
 logger = get_logger()
 
@@ -70,6 +75,11 @@ class Client:
         return self.session.get(url, **kwargs)
 
     def _post(self, url: str, **kwargs) -> requests.Response:  # type: ignore
+        if "headers" in kwargs:
+            kwargs["headers"]["X-requested-With"] = "XMLHttpRequest"
+        else:
+            kwargs["headers"] = {"X-requested-With": "XMLHttpRequest"}
+
         return self.session.post(url, **kwargs)
 
     def _remove_cookie(self) -> None:
@@ -99,9 +109,8 @@ class Client:
         password = Login.PASSWORD
 
         data = {"email_address": email_address, "password": password}
-        headers = {"X-requested-With": "XMLHttpRequest"}
 
-        res = self._post(URL.LOGIN, data=data, headers=headers)
+        res = self._post(URL.LOGIN, data=data)
 
         # save cookie to a file
         if not os.path.exists(self.config_dir):
@@ -118,26 +127,26 @@ class Client:
         return works
 
     def get_episodes(self) -> list[RemoteEpisode]:
-        """Get episodes"""
+        """Get episodes and csrf token from work page"""
         work_id = self.work.id
         res = self._get(URL.MY_WORK.format(work_id=work_id))
         html = res.text
-        episodes = WorkPageScraper(html).scrape_episodes()
+        scraper = WorkPageScraper(html)
+        episodes = scraper.scrape_episodes()
+        csrf_token = scraper.scrape_csrf_token()
+        self._toc_token = csrf_token
         return episodes
 
     def link_file(self, filepath: str) -> LocalEpisode:
         """Link file"""
         episodes = self.get_episodes()
-        local_episode: LocalEpisode
         for i, remote_episode in enumerate(episodes):
             print(f"{i}: {remote_episode}")
         try:
             number = int(input("タイトルを数字で選択してください: "))
             remote_episode = episodes[number]
-            # path not set
-            local_episode = self.get_episode_by_remote_episode(remote_episode)
             # set path
-            local_episode = self._link_file(filepath, local_episode)
+            local_episode = self._link_file(filepath, remote_episode)
             return local_episode
         except EpisodeAlreadyLinkedError as e:
             raise e
@@ -153,7 +162,7 @@ class Client:
         """Link file"""
         assert episode
         work = self.work  # copy property to local variable
-        result: LocalEpisode | None = None
+        result = LocalEpisode(**episode.model_dump())
         if another_episode := self.get_episode_by_path(filepath):
             logger.error(f"same path{ another_episode= }")
             raise EpisodeAlreadyLinkedError(f"同じファイルパスが既にリンクされています: {another_episode}")
@@ -164,11 +173,10 @@ class Client:
                 result = work_episode
                 break
         else:
-            episode.path = filepath
-            local_episode = LocalEpisode(**episode.model_dump())
-            work.episodes.append(local_episode)
+            result.path = filepath
+            work.episodes.append(result)
             logger.info(f"append episode: {episode}")
-            result = local_episode
+            result = result
         self._dump_work_toml(work)
         return result
 
@@ -189,8 +197,6 @@ class Client:
             raise e
         except ValueError as e:
             raise ValueError(f"数字を入力してください: {e}")
-            raise ValueError("選択された番号がリストの範囲外です。もう一度確認してください。")
-            raise ValueError(f"選択された番号が存在しません: {e}")
         except Exception as e:
             logger.error(f"予期しないエラー: {e}")
             raise e
@@ -230,6 +236,57 @@ class Client:
             if episode.same_id(remote_episode):
                 return episode
         return LocalEpisode(id=remote_episode.id, title=remote_episode.title)
+
+    @require_login
+    def create_remote_episode(self, title: str, file_path: str) -> None:
+        """Create episode as draft"""
+        # check if file exists
+        if not os.path.exists(file_path):
+            logger.error(f"file not found: {file_path}")
+            raise FileNotFoundError(f"file not found: {file_path}")
+
+        # check if episode already exists
+        if self.get_episode_by_path(file_path):
+            logger.error(f"episode already exists: {file_path}")
+            raise EpisodeAlreadyLinkedError(f"episode already exists: {file_path}")
+
+        before_episodes = self.get_episodes()
+
+        url = URL.NEW_EPISODE.format(work_id=self.work.id)
+        with open(file_path, "r") as f:
+            body = f.read()
+            data = CreateEpisodeRequest(title=title, body=body).model_dump()
+
+            res = self._post(
+                url,
+                data=data,
+            )
+
+            result = res.json()  # {"location":"/my/works/99999999999"} episode id返してくれない
+            if res.status_code != 200:
+                logger.error(f"{ result= }")
+                raise CreateEpisodeFailedError(f"create episode failed: {res}")
+            else:
+                logger.debug(f"{ result= }")
+                logger.info(f"created episode: {title=}")
+
+        after_episodes = self.get_episodes()
+        new_episode = (set(after_episodes) - set(before_episodes)).pop()
+
+        self._link_file(file_path, new_episode)
+
+    @require_login
+    def delete_remote_episodes(self, episodes: Iterable[EpisodeId]) -> None:
+        """Delete episodes"""
+        url = URL.EDIT_TOC.format(work_id=self.work.id)
+        token = self._toc_token
+        data = TOCAction.delete(csrf_token=token, episodes=episodes).model_dump()
+        if len(list(episodes)) == 0:
+            return
+        res = self._post(url, data=data)
+        if res.status_code != 200:
+            logger.error(f"{res=}")
+            raise DeleteEpisodeFailedError(f"delete failed: {episodes=}")
 
     @require_login
     def initialize_work(self) -> None:

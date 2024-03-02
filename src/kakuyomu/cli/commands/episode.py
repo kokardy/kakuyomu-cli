@@ -32,6 +32,7 @@ def link(filepath: str) -> None:
     except Exception as e:
         print(f"リンクに失敗しました: {e}")
 
+
 @episode.command()
 def unlink() -> None:
     """Unlink episodes"""
@@ -43,10 +44,12 @@ def unlink() -> None:
 
 
 @episode.command()
-def create() -> None:
+@click.argument("title")
+@click.argument("file_path")
+def create(title: str, file_path: str) -> None:
     """Create episode"""
-    # client.create_episode()
-    print("not implemented yet")
+    client.create_remote_episode(title=title, file_path=file_path)
+    print(f"エピソードを作成しました: {title}")
 
 
 @episode.command()
