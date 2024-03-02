@@ -102,3 +102,13 @@ class TestConnectToKakuyomu(EpisodeExistsTest):
 
         # check linked episode
         assert new_episode.id in {episode.id for episode in client.work.episodes}
+
+    def test_get_remote_episode_body(self) -> None:
+        """
+        Get remote episode body test
+
+        取得されたエピソードの内容を検証する
+        """
+        body_rows = self.client._get_remote_episode_body(episode.id)
+        body = "\n".join(body_rows)
+        assert body.strip() == "test"

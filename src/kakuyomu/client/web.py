@@ -11,6 +11,7 @@ import requests
 import toml
 
 from kakuyomu.logger import get_logger
+from kakuyomu.scrapers.episode_page import EpisodePageScraper
 from kakuyomu.scrapers.my_page import MyPageScraper
 from kakuyomu.scrapers.work_page import WorkPageScraper
 from kakuyomu.settings import CONFIG_DIRNAME, COOKIE_FILENAME, URL, WORK_FILENAME, Login
@@ -229,7 +230,7 @@ class Client:
                 return episode
         return None
 
-    def get_episode_by_remote_episode(self, remote_episode: RemoteEpisode) -> LocalEpisode:
+    def get_local_episode_by_remote_episode(self, remote_episode: RemoteEpisode) -> LocalEpisode:
         """Get episode by remote episode"""
         assert self.work
         for episode in self.work.episodes:
@@ -305,6 +306,31 @@ class Client:
             number = int(input("タイトルを数字で選択してください: "))
             work = work_list[number]
             self._dump_work_toml(work)
+        except ValueError:
+            raise ValueError("数字を入力してください")
+        except IndexError:
+            raise ValueError("選択された番号が存在しません")
+
+    def _get_remote_episode_body(self, episode_id: EpisodeId) -> Iterable[str]:
+        """Get episode body"""
+        res = self._get(URL.EPISODE.format(work_id=self.work.id, episode_id=episode_id))
+        html = res.text
+        scraper = EpisodePageScraper(html)
+        body = scraper.scrape_body()
+        return body.split("\n")
+
+    @require_login
+    def get_remote_episode_body(self) -> Iterable[str]:
+        """Get episode body"""
+        episodes = self.get_episodes()
+        for i, episode in enumerate(episodes):
+            print(f"{i}: {episode}")
+        try:
+            number = int(input("タイトルを数字で選択してください: "))
+            episode = episodes[number]
+            print(f"selected: {episode}")
+            body: str = self._get_remote_episode_body(episode.id)
+            return body
         except ValueError:
             raise ValueError("数字を入力してください")
         except IndexError:

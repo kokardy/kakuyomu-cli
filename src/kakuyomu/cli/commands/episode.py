@@ -53,6 +53,40 @@ def create(title: str, file_path: str) -> None:
 
 
 @episode.command()
+@click.option("--line", "-l", type=int, default=3)
+def show(line: int) -> None:
+    """
+    Show episode contents
+
+    Args:
+    ----
+        line (int): 表示する行数
+
+    """
+    body = client.get_remote_episode_body()
+    count = 0
+    for row in body:
+        if count >= line:
+            break
+        try:
+            # 空白行はスキップ
+            if row.strip() == "":
+                continue
+            print(row)
+            count += 1
+        except StopIteration:
+            return
+        except Exception as e:
+            print(f"予期しないエラー: {e}")
+
+
+@episode.command()
+def update() -> None:
+    """Update episode"""
+    print("not implemented yet")
+
+
+@episode.command()
 def publish() -> None:
     """Publish episode"""
     # client.publish_episode()
