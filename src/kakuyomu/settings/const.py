@@ -32,8 +32,10 @@ class URL(metaclass=ConstMeta):
     ROOT: Final[str] = "https://kakuyomu.jp"
     LOGIN: Final[str] = f"{ROOT}/login"
     MY: Final[str] = f"{ROOT}/my"
-    MY_WORK: Final[str] = f"{MY}/works/" + "{work_id}"
+    MY_WORK: Final[str] = f"{MY}/works/{{work_id}}"
     ANNTENA_WORKS: Final[str] = f"{ROOT}/anntena/works"
+    NEW_EPISODE: Final[str] = f"{MY_WORK}/episodes/new"
+    EDIT_TOC: Final[str] = f"{MY_WORK}/edit_toc_bulk"
 
 
 class Login(metaclass=ConstMeta):

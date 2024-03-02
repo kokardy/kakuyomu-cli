@@ -46,6 +46,7 @@ allow-direct-references = true
 
 [tool.ruff]
 line-length = 120
+[tool.ruff.lint]
 select = ["F", "E", "W", "D"]
 ignore = [
   "D400", # docstring first line must end with period

@@ -1,11 +1,11 @@
 """Define type aliases and models."""
 
-from typing import Optional, TypeAlias
+from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-WorkId: TypeAlias = str
-EpisodeId: TypeAlias = str
+type WorkId = str  # type: ignore
+type EpisodeId = str  # type: ignore
 
 
 class Episode(BaseModel):
@@ -26,7 +26,7 @@ class Episode(BaseModel):
 class RemoteEpisode(Episode):
     """Remote episode model"""
 
-    pass
+    model_config = ConfigDict(frozen=True)
 
 
 class LocalEpisode(Episode):
