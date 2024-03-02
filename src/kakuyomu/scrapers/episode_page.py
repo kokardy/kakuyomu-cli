@@ -18,8 +18,8 @@ class EpisodePageScraper:
         soup = bs4.BeautifulSoup(self.html, "html.parser")
         textarea = soup.select_one("textarea[name='body']")
         if not textarea:
-            raise EpisodeBodyNotFoundError(f"Tag<id=episodeBody-input> not found: {textarea=}")
+            raise EpisodeBodyNotFoundError(f"Textarea<name=body> not found: {textarea=}")
         if not isinstance(textarea, bs4.Tag):
-            raise EpisodeBodyNotFoundError(f"<id=episodeBody-input> is not Tag: {textarea=}")
+            raise EpisodeBodyNotFoundError(f"Textarea<name=body> is not Tag: {textarea=}")
         body = textarea.text
         return body

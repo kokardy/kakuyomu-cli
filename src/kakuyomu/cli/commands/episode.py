@@ -77,7 +77,7 @@ def show(line: int) -> None:
         except StopIteration:
             return
         except Exception as e:
-            raise e
+            print(f"予期しないエラー: {e}")
 
 
 @episode.command()
