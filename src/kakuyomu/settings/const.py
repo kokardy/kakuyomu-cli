@@ -36,6 +36,7 @@ class URL(metaclass=ConstMeta):
     ANNTENA_WORKS: Final[str] = f"{ROOT}/anntena/works"
     NEW_EPISODE: Final[str] = f"{MY_WORK}/episodes/new"
     EDIT_TOC: Final[str] = f"{MY_WORK}/edit_toc_bulk"
+    EPISODE: Final[str] = f"{MY_WORK}/episodes/{{episode_id}}"
 
 
 class Login(metaclass=ConstMeta):

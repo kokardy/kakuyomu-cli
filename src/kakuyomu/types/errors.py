@@ -24,8 +24,14 @@ class EpisodeNotFoundError(Exception):
 class EpisodeHasNoPathError(Exception):
     """Episode has no path error"""
 
+
 class CreateEpisodeFailedError(Exception):
     """Create episode error"""
 
+
 class DeleteEpisodeFailedError(Exception):
     """Episode delete error"""
+
+
+class EpisodeBodyNotFoundError(Exception):
+    """Episode body not found error"""
