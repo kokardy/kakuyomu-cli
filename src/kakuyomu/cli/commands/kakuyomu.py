@@ -3,6 +3,8 @@ Kakuyomu CLI
 
 Command line interface for kakuyomu.jp
 """
+
+
 import os
 
 import click
@@ -10,11 +12,14 @@ import click
 from kakuyomu.client import Client
 from kakuyomu.types.errors import TOMLAlreadyExistsError
 
+from .episode import episode
+from .work import work
+
 client = Client(os.getcwd())
 
 
 @click.group()
-def cli() -> None:
+def kakuyomu() -> None:
     """
     Kakuyomu CLI
 
@@ -22,27 +27,32 @@ def cli() -> None:
     """
 
 
-@cli.command()
+# Add subcommands
+kakuyomu.add_command(episode)
+kakuyomu.add_command(work)
+
+
+@kakuyomu.command()
 def status() -> None:
     """Show login status"""
     print(client.status())
 
 
-@cli.command()
+@kakuyomu.command()
 def logout() -> None:
     """Logout"""
     client.logout()
     print("logout")
 
 
-@cli.command()
+@kakuyomu.command()
 def login() -> None:
     """Login"""
     client.login()
     print(client.status())
 
 
-@cli.command()
+@kakuyomu.command()
 def init() -> None:
     """Initialize work toml"""
     try:

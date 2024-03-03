@@ -1,11 +1,8 @@
-"""Kakuyomu commands"""
-from .episode import episode
-from .kakuyomu import cli, client
-from .work import work
+"""
+Kakuyomu CLI
 
-__all__ = [
-    "client",
-    "episode",
-    "cli",
-    "work",
-]
+Command line interface for kakuyomu.jp
+"""
+from .kakuyomu import kakuyomu
+
+__all__ = ["kakuyomu"]
