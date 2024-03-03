@@ -3,10 +3,12 @@ import os
 
 import click
 
-from .kakuyomu import cli, client
+from kakuyomu.client import Client
+
+client = Client(os.getcwd())
 
 
-@cli.group()
+@click.group()
 def episode() -> None:
     """Episode commands"""
     pass

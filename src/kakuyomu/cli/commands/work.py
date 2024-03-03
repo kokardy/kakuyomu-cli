@@ -1,8 +1,15 @@
 """Work commands"""
-from .kakuyomu import cli, client
+
+import os
+
+import click
+
+from kakuyomu.client import Client
+
+client = Client(os.getcwd())
 
 
-@cli.group()
+@click.group()
 def work() -> None:
     """Work commands"""
 

@@ -1,10 +1,10 @@
 """Main entry point for the CLI"""
-from .commands import cli
+from .commands import kakuyomu
 
 
 def main() -> None:
     """CLI entry point"""
-    cli()
+    kakuyomu()
 
 
 if __name__ == "__main__":
