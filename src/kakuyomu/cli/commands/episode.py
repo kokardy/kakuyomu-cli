@@ -85,7 +85,8 @@ def show(line: int) -> None:
 @episode.command()
 def update() -> None:
     """Update episode"""
-    print("not implemented yet")
+    episode = client.update_remote_episode()
+    print(f"エピソードを更新しました: {episode}")
 
 
 @episode.command()

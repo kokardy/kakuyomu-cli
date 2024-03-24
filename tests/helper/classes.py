@@ -42,16 +42,15 @@ class WorkTOMLNotExistsTest(Test):
     def setup_class(cls) -> None:
         """テストクラスの初期化処理"""
         super().setup_class()
+        cls.client = createClient(case=Case.NO_WORK_TOML)
+        # TOMLファイルが存在する場合は削除しておく
+        if os.path.exists(cls.client.work_toml_path):
+            os.remove(cls.client.work_toml_path)
 
     # run before all test functions
     def setup_method(self, method: Callable[..., None]) -> None:
         """作業ディレクトリにwork.tomlファイルが存在しない状態でClientを生成する"""
         super().setup_method(method)
-        if "client" not in self.__dict__ or not self.client:
-            self.client = createClient(case=Case.NO_WORK_TOML)
-        # TOMLファイルが存在する場合は削除しておく
-        if os.path.exists(self.client.work_toml_path):
-            os.remove(self.client.work_toml_path)
 
     # run after all test functions
     def teardown_method(self, method: Callable[..., None]) -> None:
@@ -78,15 +77,14 @@ class NoEpisodesTest(Test):
     def setup_class(cls) -> None:
         """テストクラスの初期化処理"""
         super().setup_class()
+        cls.client = createClient(case=Case.NO_EPISODES)
+        # episodesが空のworkに置き換えておく
+        cls.client._dump_work_toml(cls.WORK)
 
     # run before all test functions
     def setup_method(self, method: Callable[..., None]) -> None:
         """作業ディレクトリにwork.tomlファイルが存在する状態でClientを生成する"""
         super().setup_method(method)
-        if "client" not in self.__dict__ or not self.client:
-            self.client = createClient(case=Case.NO_EPISODES)
-        # episodesが空のworkに置き換えておく
-        self.client._dump_work_toml(self.__class__.WORK)
 
     # run after all test functions
     def teardown_method(self, method: Callable[..., None]) -> None:
@@ -127,15 +125,14 @@ class EpisodeExistsTest(Test):
     def setup_class(cls) -> None:
         """テストクラスの初期化処理"""
         super().setup_class()
+        cls.client = createClient(case=Case.EPISODES_EXISTS)
+        # episodesがある状態のworkに置き換えておく
+        cls.client._dump_work_toml(cls.WORK)
 
     # run before all test functions
     def setup_method(self, method: Callable[..., None]) -> None:
         """作業ディレクトリにwork.tomlファイルが存在する状態でClientを生成する"""
         super().setup_method(method)
-        if "client" not in self.__dict__ or not self.client:
-            self.client = createClient(case=Case.EPISODES_EXISTS)
-        # episodesがある状態のworkに置き換えておく
-        self.client._dump_work_toml(self.__class__.WORK)
 
     # run after all test functions
     def teardown_method(self, method: Callable[..., None]) -> None:
