@@ -39,11 +39,26 @@ class TestConnectToKakuyomu(EpisodeExistsTest):
     kakuyomuとの通信をmockにしない
     """
 
+    original_title = "第4話"
+    original_body = ["test"]
+
+    @classmethod
+    def setup_class(cls) -> None:
+        """Create client"""
+        super().setup_class()
+        if not cls.client.status().is_login:
+            cls.client.login()
+        cls.client._update_remote_episode(episode.id, title=cls.original_title, body=cls.original_body)
+
+    @classmethod
+    def teardown_class(cls) -> None:
+        """Restore all episodes"""
+        # 元に戻す
+        cls.client._update_remote_episode(episode.id, title=cls.original_title, body=cls.original_body)
+
     def setup_method(self, method: Callable[..., None]) -> None:
         """Create work and episode"""
         super().setup_method(method)
-        if not self.client.status().is_login:
-            self.client.login()
 
     def teardown_method(self, method: Callable[..., None]) -> None:
         """Remove all created episodes"""
@@ -112,3 +127,24 @@ class TestConnectToKakuyomu(EpisodeExistsTest):
         body_rows = self.client._get_remote_episode_body(episode.id)
         body = "\n".join(body_rows)
         assert body.strip() == "test"
+
+    def test_update_remote_episode(self) -> None:
+        """
+        Update remote episode test
+
+        エピソードの内容を更新する
+        更新された内容を取得して検証する
+        """
+        remote_episode = self.client.get_remote_episode(episode.id)
+        original_body = list(self.client._get_remote_episode_body(episode.id))
+        original_title = remote_episode.title
+        new_body = ["new body"]
+        new_title = "new title"
+        self.client._update_remote_episode(episode.id, title=new_title, body=new_body)
+
+        # 更新確認
+        assert original_body != new_body
+        assert original_title != new_title
+        remote_episode = self.client.get_remote_episode(episode.id)
+        assert new_title == remote_episode.title
+        assert new_body == list(self.client._get_remote_episode_body(episode.id))
