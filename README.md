@@ -25,18 +25,20 @@ Command line interface for kakuyomu.jp writers.
 ex)
 `kakuyomu work list`
 
+```
 Options:
   --help  Show this message and exit.
 
 Commands:
   list  List work titles
-
+```
 
 ## Episode Commands
 
 ex)
 `kakuyomu episode list`
 
+```
 Options:
   --help  Show this message and exit.
 
@@ -48,7 +50,7 @@ Commands:
   show     Show episode contents
   unlink   Unlink episodes
   update   Update episode
-
+```
 
 ## usage
 
