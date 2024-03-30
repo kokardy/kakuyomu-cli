@@ -17,7 +17,7 @@ def episode() -> None:
 @episode.command("list")
 def ls() -> None:
     """List episode titles"""
-    for i, episode in enumerate(client.get_episodes()):
+    for i, episode in enumerate(client.get_remote_episodes()):
         print(i, episode)
 
 
