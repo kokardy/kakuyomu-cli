@@ -39,16 +39,31 @@ class TestConnectToKakuyomu(EpisodeExistsTest):
     kakuyomuとの通信をmockにしない
     """
 
+    original_title = "第4話"
+    original_body = ["test"]
+
+    @classmethod
+    def setup_class(cls) -> None:
+        """Create client"""
+        super().setup_class()
+        if not cls.client.status().is_login:
+            cls.client.login()
+        cls.client._update_remote_episode(episode.id, title=cls.original_title, body=cls.original_body)
+
+    @classmethod
+    def teardown_class(cls) -> None:
+        """Restore all episodes"""
+        # 元に戻す
+        cls.client._update_remote_episode(episode.id, title=cls.original_title, body=cls.original_body)
+
     def setup_method(self, method: Callable[..., None]) -> None:
         """Create work and episode"""
         super().setup_method(method)
-        if not self.client.status().is_login:
-            self.client.login()
 
     def teardown_method(self, method: Callable[..., None]) -> None:
         """Remove all created episodes"""
         super().teardown_method(method)
-        current_episodes = self.client.get_episodes()
+        current_episodes = self.client.get_remote_episodes()
         delete_ids = [_episode.id for _episode in current_episodes if _episode.id not in {e.id for e in episodes}]
         self.client.delete_remote_episodes(episodes=[delete_ids])
 
@@ -71,7 +86,7 @@ class TestConnectToKakuyomu(EpisodeExistsTest):
 
     def test_episode_list(self) -> None:
         """Episode list test"""
-        episodes = self.client.get_episodes()
+        episodes = self.client.get_remote_episodes()
         assert episode.id in {episodes.id for episodes in episodes}
         index = [episode.id for episode in episodes].index(episode.id)
         assert index > -1
@@ -86,10 +101,10 @@ class TestConnectToKakuyomu(EpisodeExistsTest):
         """
         client = self.client
         # before
-        before_episodes = client.get_episodes()
+        before_episodes = client.get_remote_episodes()
         client.create_remote_episode(title="テスト001", file_path=os.path.join(self.client.work_dir, "publish/001.txt"))
         # after
-        after_episodes = client.get_episodes()
+        after_episodes = client.get_remote_episodes()
 
         diff = set(after_episodes) - set(before_episodes)
         assert len(diff) == 1
@@ -97,7 +112,7 @@ class TestConnectToKakuyomu(EpisodeExistsTest):
 
         client.delete_remote_episodes(episodes=[new_episode.id])
 
-        final_episodes = client.get_episodes()
+        final_episodes = client.get_remote_episodes()
         assert len(before_episodes) == len(final_episodes)
 
         # check linked episode
@@ -112,3 +127,24 @@ class TestConnectToKakuyomu(EpisodeExistsTest):
         body_rows = self.client._get_remote_episode_body(episode.id)
         body = "\n".join(body_rows)
         assert body.strip() == "test"
+
+    def test_update_remote_episode(self) -> None:
+        """
+        Update remote episode test
+
+        エピソードの内容を更新する
+        更新された内容を取得して検証する
+        """
+        remote_episode = self.client.get_remote_episode(episode.id)
+        original_body = list(self.client._get_remote_episode_body(episode.id))
+        original_title = remote_episode.title
+        new_body = ["new body"]
+        new_title = "new title"
+        self.client._update_remote_episode(episode.id, title=new_title, body=new_body)
+
+        # 更新確認
+        assert original_body != new_body
+        assert original_title != new_title
+        remote_episode = self.client.get_remote_episode(episode.id)
+        assert new_title == remote_episode.title
+        assert new_body == list(self.client._get_remote_episode_body(episode.id))

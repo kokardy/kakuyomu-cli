@@ -1,5 +1,6 @@
 """Define type aliases and models."""
 
+from collections.abc import Iterable
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict
@@ -37,6 +38,13 @@ class LocalEpisode(Episode):
     def __str__(self) -> str:
         """Return string representation of the episode"""
         return f"{self.id}:{self.title} path={self.path}"
+
+    def body(self) -> Iterable[str]:
+        """Return body text of the episode"""
+        if self.path is None:
+            raise ValueError(f"Path is not set: {self=}")
+        with open(self.path, "r") as f:
+            yield from f
 
 
 class Work(BaseModel):

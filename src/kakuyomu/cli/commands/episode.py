@@ -17,7 +17,7 @@ def episode() -> None:
 @episode.command("list")
 def ls() -> None:
     """List episode titles"""
-    for i, episode in enumerate(client.get_episodes()):
+    for i, episode in enumerate(client.get_remote_episodes()):
         print(i, episode)
 
 
@@ -85,7 +85,8 @@ def show(line: int) -> None:
 @episode.command()
 def update() -> None:
     """Update episode"""
-    print("not implemented yet")
+    episode = client.update_remote_episode()
+    print(f"エピソードを更新しました: {episode}")
 
 
 @episode.command()

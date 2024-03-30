@@ -12,12 +12,45 @@ Command line interface for kakuyomu.jp writers.
 
 | command | description          |
 | -----   | ----                 |
-| episode | Episode commands     |
 | init    | Initialize work toml |
 | login   | Login                |
 | logout  | Logout               |
 | status  | Show login status    |
-| works   | List work titles     |
+| work    | Work commands        |
+| episode | Episode commands     |
+
+
+## Work Commands
+
+ex)
+`kakuyomu work list`
+
+```
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  list  List work titles
+```
+
+## Episode Commands
+
+ex)
+`kakuyomu episode list`
+
+```
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  create   Create episode
+  link     Link episodes
+  list     List episode titles
+  publish  Publish episode
+  show     Show episode contents
+  unlink   Unlink episodes
+  update   Update episode
+```
 
 ## usage
 

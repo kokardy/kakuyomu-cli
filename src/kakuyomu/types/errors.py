@@ -25,6 +25,10 @@ class EpisodeHasNoPathError(Exception):
     """Episode has no path error"""
 
 
+class EpisodeUpdateFailedError(Exception):
+    """Episode update error"""
+
+
 class CreateEpisodeFailedError(Exception):
     """Create episode error"""
 

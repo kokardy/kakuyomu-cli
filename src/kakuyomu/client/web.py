@@ -22,6 +22,7 @@ from kakuyomu.types.errors import (
     EpisodeAlreadyLinkedError,
     EpisodeHasNoPathError,
     EpisodeNotFoundError,
+    EpisodeUpdateFailedError,
     TOMLAlreadyExistsError,
 )
 
@@ -127,7 +128,7 @@ class Client:
         works = MyPageScraper(html).scrape_works()
         return works
 
-    def get_episodes(self) -> list[RemoteEpisode]:
+    def get_remote_episodes(self) -> list[RemoteEpisode]:
         """Get episodes and csrf token from work page"""
         work_id = self.work.id
         res = self._get(URL.MY_WORK.format(work_id=work_id))
@@ -140,21 +141,13 @@ class Client:
 
     def link_file(self, filepath: str) -> LocalEpisode:
         """Link file"""
-        episodes = self.get_episodes()
-        for i, remote_episode in enumerate(episodes):
-            print(f"{i}: {remote_episode}")
         try:
-            number = int(input("タイトルを数字で選択してください: "))
-            remote_episode = episodes[number]
+            remote_episode = self._select_remote_episode()
             # set path
             local_episode = self._link_file(filepath, remote_episode)
             return local_episode
         except EpisodeAlreadyLinkedError as e:
             raise e
-        except ValueError as e:
-            raise ValueError(f"数字を入力してください: {e}")
-        except IndexError as e:
-            raise ValueError(f"選択された番号が存在しません: {e}")
         except Exception as e:
             logger.error(f"予期しないエラー: {e}")
             raise e
@@ -183,21 +176,14 @@ class Client:
 
     def unlink(self) -> LocalEpisode:
         """Unlink episode"""
-        work = self.work  # copy property to local variable
-
-        for i, episode in enumerate(work.episodes):
-            print(f"{i}: {episode}")
         try:
-            number = int(input("タイトルを数字で選択してください: "))
-            episode = work.episodes[number]
-            self._unlink(episode.id)
-            return episode
+            local_episode = self._select_local_episode()
+            self._unlink(local_episode.id)
+            return local_episode
         except EpisodeNotFoundError as e:
             raise e
         except EpisodeHasNoPathError as e:
             raise e
-        except ValueError as e:
-            raise ValueError(f"数字を入力してください: {e}")
         except Exception as e:
             logger.error(f"予期しないエラー: {e}")
             raise e
@@ -251,7 +237,7 @@ class Client:
             logger.error(f"episode already exists: {file_path}")
             raise EpisodeAlreadyLinkedError(f"episode already exists: {file_path}")
 
-        before_episodes = self.get_episodes()
+        before_episodes = self.get_remote_episodes()
 
         url = URL.NEW_EPISODE.format(work_id=self.work.id)
         with open(file_path, "r") as f:
@@ -271,7 +257,7 @@ class Client:
                 logger.debug(f"{ result= }")
                 logger.info(f"created episode: {title=}")
 
-        after_episodes = self.get_episodes()
+        after_episodes = self.get_remote_episodes()
         new_episode = (set(after_episodes) - set(before_episodes)).pop()
 
         self._link_file(file_path, new_episode)
@@ -288,6 +274,38 @@ class Client:
         if res.status_code != 200:
             logger.error(f"{res=}")
             raise DeleteEpisodeFailedError(f"delete failed: {episodes=}")
+
+    @require_login
+    def _update_remote_episode(self, episode_id: EpisodeId, title: str = "", body: Iterable[str] = []) -> None:
+        """Update remote episode"""
+        local_episode = self.get_episode_by_id(episode_id)
+
+        url = URL.EPISODE.format(work_id=self.work.id, episode_id=episode_id)
+        params: dict[str, str] = {}
+
+        local_title = title if title else local_episode.title
+        params["title"] = local_title
+        local_body = "\n".join(body if body else local_episode.body())
+        params["body"] = local_body
+
+        html = self._get(url).text
+        scraper = EpisodePageScraper(html)
+        csrf_token = scraper.scrape_csrf_token()
+        params["csrf_token"] = csrf_token
+        status = scraper.scrape_status()
+        params.update(status)
+
+        res = self._post(url, data=params)
+        if res.status_code != 200:
+            logger.error(f"{res.status_code=} {res.text=}")
+            raise EpisodeUpdateFailedError(f"update failed: {res}")
+
+    @require_login
+    def update_remote_episode(self) -> RemoteEpisode:
+        """Update remote episodes"""
+        remote_episode = self._select_remote_episode()
+        self._update_remote_episode(remote_episode.id)
+        return remote_episode
 
     @require_login
     def initialize_work(self) -> None:
@@ -311,25 +329,33 @@ class Client:
         except IndexError:
             raise ValueError("選択された番号が存在しません")
 
+    def get_remote_episode(self, episode_id: EpisodeId) -> RemoteEpisode:
+        """Get remote episode"""
+        episodes = self.get_remote_episodes()
+        for episode in episodes:
+            if episode.id == episode_id:
+                return episode
+
+        raise EpisodeNotFoundError(f"エピソードが見つかりません: {episode_id}")
+
     def _get_remote_episode_body(self, episode_id: EpisodeId) -> Iterable[str]:
         """Get episode body"""
         res = self._get(URL.EPISODE.format(work_id=self.work.id, episode_id=episode_id))
         html = res.text
         scraper = EpisodePageScraper(html)
-        body = scraper.scrape_body()
+        # 最初の改行は削除
+        body = scraper.scrape_body().lstrip("\n")
         return body.split("\n")
 
     @require_login
     def get_remote_episode_body(self) -> Iterable[str]:
         """Get episode body"""
-        episodes = self.get_episodes()
-        for i, episode in enumerate(episodes):
-            print(f"{i}: {episode}")
+        episodes = self.get_remote_episodes()
+        for i, remote_episode in enumerate(episodes):
+            print(f"{i}: {remote_episode}")
         try:
-            number = int(input("タイトルを数字で選択してください: "))
-            episode = episodes[number]
-            print(f"selected: {episode}")
-            body: str = self._get_remote_episode_body(episode.id)
+            remote_episode = self._select_remote_episode()
+            body: Iterable[str] = self._get_remote_episode_body(remote_episode.id)
             return body
         except ValueError:
             raise ValueError("数字を入力してください")
@@ -384,3 +410,38 @@ class Client:
             cwd = os.path.dirname(cwd)
             if os.path.abspath(cwd) == os.path.abspath(os.path.sep):
                 raise FileNotFoundError(f"{CONFIG_DIRNAME} not found")
+
+    def _select_remote_episode(self) -> RemoteEpisode:
+        """Select remote episode"""
+        episodes = self.get_remote_episodes()
+        for i, episode in enumerate(episodes):
+            print(f"{i}: {episode}")
+        try:
+            number = int(input("タイトルを数字で選択してください: "))
+            episode = episodes[number]
+            print(f"selected: {episode}")
+            return episode
+        except ValueError:
+            raise ValueError("数字を入力してください")
+        except IndexError:
+            raise ValueError("選択された番号が存在しません")
+        except Exception as e:
+            logger.error(f"予期しないエラー: {e}")
+            raise e
+
+    def _select_local_episode(self) -> LocalEpisode:
+        """Select local episode"""
+        for i, episode in enumerate(self.work.episodes):
+            print(f"{i}: {episode}")
+        try:
+            number = int(input("タイトルを数字で選択してください: "))
+            episode = self.work.episodes[number]
+            print(f"selected: {episode}")
+            return episode
+        except ValueError:
+            raise ValueError("数字を入力してください")
+        except IndexError:
+            raise ValueError("選択された番号が存在しません")
+        except Exception as e:
+            logger.error(f"予期しないエラー: {e}")
+            raise e

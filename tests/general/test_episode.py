@@ -26,7 +26,7 @@ class TestEpisodeNoEpisode(NoEpisodesTest):
 
     def test_episode_list(self) -> None:
         """Episode list test"""
-        episodes = self.client.get_episodes()
+        episodes = self.client.get_remote_episodes()
         episode = episode_with_path
         assert episode.id in {episode.id for episode in episodes}
         index = [episode.id for episode in episodes].index(episode.id)
