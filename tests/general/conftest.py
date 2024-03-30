@@ -34,4 +34,4 @@ def fake_get_episodes(mocker):
             title="第2話",
         ),
     ]
-    mocker.patch.object(Client, "get_episodes", return_value=episodes)
+    mocker.patch.object(Client, "get_remote_episodes", return_value=episodes)

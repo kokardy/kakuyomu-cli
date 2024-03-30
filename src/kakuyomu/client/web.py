@@ -128,7 +128,7 @@ class Client:
         works = MyPageScraper(html).scrape_works()
         return works
 
-    def get_episodes(self) -> list[RemoteEpisode]:
+    def get_remote_episodes(self) -> list[RemoteEpisode]:
         """Get episodes and csrf token from work page"""
         work_id = self.work.id
         res = self._get(URL.MY_WORK.format(work_id=work_id))
@@ -237,7 +237,7 @@ class Client:
             logger.error(f"episode already exists: {file_path}")
             raise EpisodeAlreadyLinkedError(f"episode already exists: {file_path}")
 
-        before_episodes = self.get_episodes()
+        before_episodes = self.get_remote_episodes()
 
         url = URL.NEW_EPISODE.format(work_id=self.work.id)
         with open(file_path, "r") as f:
@@ -257,7 +257,7 @@ class Client:
                 logger.debug(f"{ result= }")
                 logger.info(f"created episode: {title=}")
 
-        after_episodes = self.get_episodes()
+        after_episodes = self.get_remote_episodes()
         new_episode = (set(after_episodes) - set(before_episodes)).pop()
 
         self._link_file(file_path, new_episode)
@@ -331,7 +331,7 @@ class Client:
 
     def get_remote_episode(self, episode_id: EpisodeId) -> RemoteEpisode:
         """Get remote episode"""
-        episodes = self.get_episodes()
+        episodes = self.get_remote_episodes()
         for episode in episodes:
             if episode.id == episode_id:
                 return episode
@@ -350,7 +350,7 @@ class Client:
     @require_login
     def get_remote_episode_body(self) -> Iterable[str]:
         """Get episode body"""
-        episodes = self.get_episodes()
+        episodes = self.get_remote_episodes()
         for i, remote_episode in enumerate(episodes):
             print(f"{i}: {remote_episode}")
         try:
@@ -413,7 +413,7 @@ class Client:
 
     def _select_remote_episode(self) -> RemoteEpisode:
         """Select remote episode"""
-        episodes = self.get_episodes()
+        episodes = self.get_remote_episodes()
         for i, episode in enumerate(episodes):
             print(f"{i}: {episode}")
         try:
