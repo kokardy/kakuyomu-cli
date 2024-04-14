@@ -6,6 +6,7 @@ import pytest
 
 from kakuyomu.types import LocalEpisode
 from kakuyomu.types.errors import EpisodeAlreadyLinkedError, EpisodeHasNoPathError
+from kakuyomu.types.path import Path
 
 from ..helper import EpisodeExistsTest, NoEpisodesTest
 
@@ -35,7 +36,7 @@ class TestEpisodeNoEpisode(NoEpisodesTest):
     def test_episode_link(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Episode link test"""
         monkeypatch.setattr("sys.stdin", StringIO("1\n"))
-        file_path = "./episodes/004.txt"
+        file_path = Path("./episodes/004.txt")
         assert self.client.work
 
         assert file_path not in {episode.path for episode in self.client.work.episodes}
@@ -46,7 +47,7 @@ class TestEpisodeNoEpisode(NoEpisodesTest):
         """Same path error test"""
         monkeypatch.setattr("sys.stdin", StringIO("1\n1\n"))
         assert self.client.work
-        file_path = "./episodes/004.txt"
+        file_path = Path("./episodes/004.txt")
         print(self.client.work.episodes)
         self.client.link_file(file_path)
         with pytest.raises(EpisodeAlreadyLinkedError):

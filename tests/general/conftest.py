@@ -1,12 +1,13 @@
 """Fixtures for generic tests."""
 import pytest
+from pytest_mock import MockFixture
 
 from kakuyomu.client import Client
 from kakuyomu.types import RemoteEpisode, Work, WorkId
 
 
 @pytest.fixture
-def fake_get_works(mocker):
+def fake_get_works(mocker: MockFixture) -> None:
     """Mock the get method of the requests module."""
     works: dict[WorkId, Work] = {
         "16816927859498193192": Work(
@@ -18,7 +19,7 @@ def fake_get_works(mocker):
 
 
 @pytest.fixture
-def fake_get_episodes(mocker):
+def fake_get_episodes(mocker: MockFixture) -> None:
     """Mock the get method of the requests module."""
     episodes: list[RemoteEpisode] = [
         RemoteEpisode(

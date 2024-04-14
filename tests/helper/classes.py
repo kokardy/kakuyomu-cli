@@ -1,9 +1,9 @@
 """テスト用のクラスを定義するモジュール"""
-import os
 from typing import Callable, ClassVar
 
 from kakuyomu.client import Client
 from kakuyomu.types import LocalEpisode, Work
+from kakuyomu.types.path import Path
 
 from .functions import Case, createClient, logger
 
@@ -44,8 +44,7 @@ class WorkTOMLNotExistsTest(Test):
         super().setup_class()
         cls.client = createClient(case=Case.NO_WORK_TOML)
         # TOMLファイルが存在する場合は削除しておく
-        if os.path.exists(cls.client.work_toml_path):
-            os.remove(cls.client.work_toml_path)
+        cls.client.config_dir.work_toml.unlink(missing_ok=True)
 
     # run before all test functions
     def setup_method(self, method: Callable[..., None]) -> None:
@@ -57,8 +56,7 @@ class WorkTOMLNotExistsTest(Test):
         """残っているtomlファイルを削除する"""
         super().teardown_method(method)
         # TOMLファイルが存在する場合は削除しておく
-        if os.path.exists(self.client.work_toml_path):
-            os.remove(self.client.work_toml_path)
+        self.client.config_dir.work_toml.unlink(missing_ok=True)
 
 
 class NoEpisodesTest(Test):
@@ -106,12 +104,12 @@ class EpisodeExistsTest(Test):
             LocalEpisode(
                 id="16816927859859822600",
                 title="第1話",
-                path="publish/001.txt",
+                path=Path("publish/001.txt"),
             ),
             LocalEpisode(
                 id="16816927859880032697",
                 title="第4話",
-                path="publish/002.txt",
+                path=Path("publish/002.txt"),
             ),
             LocalEpisode(
                 id="16816927859880026113",

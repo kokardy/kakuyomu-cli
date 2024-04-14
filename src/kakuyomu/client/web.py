@@ -3,18 +3,18 @@ Web client for kakuyomu
 
 This module is a web client for kakuyomu.jp.
 """
-import os
 import pickle
 from typing import Iterable
 
 import requests
 import toml
+from requests.cookies import RequestsCookieJar
 
 from kakuyomu.logger import get_logger
 from kakuyomu.scrapers.episode_page import EpisodePageScraper
 from kakuyomu.scrapers.my_page import MyPageScraper
 from kakuyomu.scrapers.work_page import WorkPageScraper
-from kakuyomu.settings import CONFIG_DIRNAME, COOKIE_FILENAME, URL, WORK_FILENAME, Login
+from kakuyomu.settings import CONFIG_DIRNAME, URL, Login
 from kakuyomu.types import EpisodeId, LocalEpisode, LoginStatus, RemoteEpisode, Work, WorkId
 from kakuyomu.types.errors import (
     CreateEpisodeFailedError,
@@ -25,6 +25,7 @@ from kakuyomu.types.errors import (
     EpisodeUpdateFailedError,
     TOMLAlreadyExistsError,
 )
+from kakuyomu.types.path import ConfigDir, Path
 
 from .decorators import require_login
 from .request_models import CreateEpisodeRequest
@@ -37,28 +38,24 @@ class Client:
     """Web client for kakuyomu"""
 
     session: requests.Session
-    config_dir: str
-    work_toml_path: str
-    cookie_path: str
-    work_dir: str
+    cwd: Path
+    config_dir: ConfigDir
 
-    def __init__(self, cwd: str = os.getcwd()) -> None:
+    def __init__(self, cwd: Path = Path.cwd()) -> None:
         """Initialize web client"""
         self.session = requests.Session()
+        self.cwd = cwd
         try:
-            self.config_dir = self._get_config_dir(cwd)
+            self.config_dir = self.cwd.config_dir
         except FileNotFoundError as e:
             logger.info(f"{e} {CONFIG_DIRNAME=} not found")
-            self.config_dir = os.path.join(cwd, CONFIG_DIRNAME)
-        self.work_toml_path = os.path.join(self.config_dir, WORK_FILENAME)
-        self.cookie_path = os.path.join(self.config_dir, COOKIE_FILENAME)
-        self.work_dir = os.path.dirname(self.config_dir)
-        cookies = self._load_cookie(self.cookie_path)
+            self.config_dir = ConfigDir(Path.joinpath(cwd, CONFIG_DIRNAME))
+        cookies = self._load_cookie(self.config_dir.cookie)
         if cookies:
             self.session.cookies = cookies
 
-    def _load_cookie(self, filepath: str) -> requests.cookies.RequestsCookieJar | None:
-        cookie: requests.cookies.RequestsCookieJar
+    def _load_cookie(self, filepath: Path) -> RequestsCookieJar | None:
+        cookie: RequestsCookieJar | None
         try:
             with open(filepath, "rb") as f:
                 cookie = pickle.load(f)
@@ -71,7 +68,7 @@ class Client:
     @property
     def work(self) -> Work:
         """Load work"""
-        return self._load_work_toml()
+        return Work.load(self.config_dir.work_toml)
 
     def _get(self, url: str, **kwargs) -> requests.Response:  # type: ignore
         return self.session.get(url, **kwargs)
@@ -85,11 +82,7 @@ class Client:
         return self.session.post(url, **kwargs)
 
     def _remove_cookie(self) -> None:
-        if os.path.exists(self.cookie_path):
-            os.remove(self.cookie_path)
-
-    def _set_config_dir(self, config_dir: str) -> None:
-        self.config_dir = config_dir
+        self.config_dir.cookie.unlink(missing_ok=True)
 
     def status(self) -> LoginStatus:
         """Get login status"""
@@ -115,9 +108,9 @@ class Client:
         res = self._post(URL.LOGIN, data=data)
 
         # save cookie to a file
-        if not os.path.exists(self.config_dir):
-            os.mkdir(self.config_dir)
-        with open(self.cookie_path, "wb") as f:
+        if not self.config_dir.exists():
+            self.config_dir.mkdir()
+        with open(self.config_dir.cookie, "wb") as f:
             pickle.dump(res.cookies, f)
 
     @require_login
@@ -139,7 +132,7 @@ class Client:
         self._toc_token = csrf_token
         return episodes
 
-    def link_file(self, filepath: str) -> LocalEpisode:
+    def link_file(self, filepath: Path) -> LocalEpisode:
         """Link file"""
         try:
             remote_episode = self._select_remote_episode()
@@ -152,7 +145,7 @@ class Client:
             logger.error(f"予期しないエラー: {e}")
             raise e
 
-    def _link_file(self, filepath: str, episode: RemoteEpisode) -> LocalEpisode:
+    def _link_file(self, filepath: Path, episode: RemoteEpisode) -> LocalEpisode:
         """Link file"""
         assert episode
         work = self.work  # copy property to local variable
@@ -208,7 +201,7 @@ class Client:
                 return episode
         raise EpisodeNotFoundError(f"エピソードが見つかりません: {episode_id} {self.work.episodes}")
 
-    def get_episode_by_path(self, filepath: str) -> LocalEpisode | None:
+    def get_episode_by_path(self, filepath: Path) -> LocalEpisode | None:
         """Get episode by path"""
         logger.debug(f"local episodes: { self.work.episodes }")
         for episode in self.work.episodes:
@@ -225,22 +218,22 @@ class Client:
         return LocalEpisode(id=remote_episode.id, title=remote_episode.title)
 
     @require_login
-    def create_remote_episode(self, title: str, file_path: str) -> None:
+    def create_remote_episode(self, title: str, filepath: Path) -> None:
         """Create episode as draft"""
         # check if file exists
-        if not os.path.exists(file_path):
-            logger.error(f"file not found: {file_path}")
-            raise FileNotFoundError(f"file not found: {file_path}")
+        if not filepath.exists():
+            logger.error(f"file not found: {filepath}")
+            raise FileNotFoundError(f"file not found: {filepath}")
 
         # check if episode already exists
-        if self.get_episode_by_path(file_path):
-            logger.error(f"episode already exists: {file_path}")
-            raise EpisodeAlreadyLinkedError(f"episode already exists: {file_path}")
+        if self.get_episode_by_path(filepath):
+            logger.error(f"episode already exists: {filepath}")
+            raise EpisodeAlreadyLinkedError(f"episode already exists: {filepath}")
 
         before_episodes = self.get_remote_episodes()
 
         url = URL.NEW_EPISODE.format(work_id=self.work.id)
-        with open(file_path, "r") as f:
+        with open(filepath, "r") as f:
             body = f.read()
             data = CreateEpisodeRequest(title=title, body=body).model_dump()
 
@@ -260,7 +253,7 @@ class Client:
         after_episodes = self.get_remote_episodes()
         new_episode = (set(after_episodes) - set(before_episodes)).pop()
 
-        self._link_file(file_path, new_episode)
+        self._link_file(filepath, new_episode)
 
     @require_login
     def delete_remote_episodes(self, episodes: Iterable[EpisodeId]) -> None:
@@ -275,9 +268,21 @@ class Client:
             logger.error(f"{res=}")
             raise DeleteEpisodeFailedError(f"delete failed: {episodes=}")
 
-    @require_login
+    # @require_login
     def _update_remote_episode(self, episode_id: EpisodeId, title: str = "", body: Iterable[str] = []) -> None:
-        """Update remote episode"""
+        """
+        Update remote episode
+
+        Args:
+        ----
+            episode_id: Episode ID
+            title: title
+            body: body
+
+        Raises:
+        ------
+            EpisodeUpdateFailedError: error occurred while updating episode
+        """
         local_episode = self.get_episode_by_id(episode_id)
 
         url = URL.EPISODE.format(work_id=self.work.id, episode_id=episode_id)
@@ -311,7 +316,7 @@ class Client:
     def initialize_work(self) -> None:
         """Initialize work"""
         # check if work toml already exists
-        if os.path.exists(self.work_toml_path):
+        if self.config_dir.work_toml.exists():
             logger.error(f"work toml already exists. {self.work}")
             raise TOMLAlreadyExistsError(f"work.tomlはすでに存在します {self.work}")
 
@@ -364,52 +369,14 @@ class Client:
 
     def _dump_work_toml(self, work: Work) -> None:
         """Initialize work"""
-        filepath = self.work_toml_path
-        if os.path.exists(filepath):
-            logger.info(f"work toml {filepath=} already exists. override {work}")
+        toml_path = self.config_dir.work_toml
+        if toml_path.exists():
+            logger.info(f"work toml {toml_path=} already exists. override {work}")
 
-        with open(filepath, "w") as f:
+        with open(toml_path, "w") as f:
             toml.dump(work.model_dump(), f)
 
         logger.info(f"dump work toml: {work}")
-
-    def _load_work_toml(self) -> Work:
-        """
-        Load work config
-
-        Load work config
-        Result is caches.
-        """
-        try:
-            with open(self.work_toml_path, "r") as f:
-                config = toml.load(f)
-                return Work(**config)
-        except FileNotFoundError as e:
-            logger.info(f"{self.work_toml_path} not found")
-            raise e
-        except toml.TomlDecodeError as e:
-            logger.error(f"Error decoding TOML: {e}")
-            raise e
-        except Exception as e:
-            logger.error(f"unexpected error: {e}")
-            raise e
-
-    def _get_config_dir(self, cwd: str) -> str:
-        """
-        Find work config dir
-
-        Find work config dir from current working directory.
-        """
-        while True:
-            path = os.path.join(cwd, CONFIG_DIRNAME)
-            if os.path.exists(path):
-                if os.path.isdir(path):
-                    logger.info(f"work dir found: {cwd}")
-                    config_dir = os.path.join(cwd, CONFIG_DIRNAME)
-                    return config_dir
-            cwd = os.path.dirname(cwd)
-            if os.path.abspath(cwd) == os.path.abspath(os.path.sep):
-                raise FileNotFoundError(f"{CONFIG_DIRNAME} not found")
 
     def _select_remote_episode(self) -> RemoteEpisode:
         """Select remote episode"""
