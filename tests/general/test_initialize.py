@@ -1,6 +1,5 @@
 """Test for initialize"""
 
-import os
 from io import StringIO
 
 import pytest
@@ -27,7 +26,7 @@ class TestInitialize(WorkTOMLNotExistsTest):
         monkeypatch.setattr("sys.stdin", StringIO("0\n"))
         self.client.initialize_work()
 
-        assert os.path.exists(self.client.work_toml_path)
+        assert self.client.config_dir.work_toml.exists()
         assert self.client.work is not None
         assert self.client.work.id == work.id
 
@@ -38,7 +37,7 @@ class TestInitialize(WorkTOMLNotExistsTest):
         monkeypatch.setattr("sys.stdin", StringIO("0\n"))
         self.client.initialize_work()
 
-        assert os.path.exists(self.client.work_toml_path)
+        assert self.client.config_dir.work_toml.exists()
 
         # raise error already exists
         with pytest.raises(TOMLAlreadyExistsError):

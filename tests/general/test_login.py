@@ -1,13 +1,10 @@
 """Test for login"""
-import os
 from typing import Callable
 
 from kakuyomu.client import Client
 from kakuyomu.types import LocalEpisode, RemoteEpisode, Work
 
 from ..helper import EpisodeExistsTest
-
-here = os.path.abspath(os.path.dirname(__file__))
 
 work = Work(
     id="16816927859498193192",
@@ -65,7 +62,7 @@ class TestConnectToKakuyomu(EpisodeExistsTest):
         super().teardown_method(method)
         current_episodes = self.client.get_remote_episodes()
         delete_ids = [_episode.id for _episode in current_episodes if _episode.id not in {e.id for e in episodes}]
-        self.client.delete_remote_episodes(episodes=[delete_ids])
+        self.client.delete_remote_episodes(episodes=delete_ids)
 
     def test_status_not_login(self, logout_client: Client) -> None:
         """Test status not login"""
@@ -102,7 +99,9 @@ class TestConnectToKakuyomu(EpisodeExistsTest):
         client = self.client
         # before
         before_episodes = client.get_remote_episodes()
-        client.create_remote_episode(title="テスト001", file_path=os.path.join(self.client.work_dir, "publish/001.txt"))
+        title = "テスト001"
+        filepath = self.client.config_dir.work_root.joinpath("publish/001.txt")
+        client.create_remote_episode(title=title, filepath=filepath)
         # after
         after_episodes = client.get_remote_episodes()
 

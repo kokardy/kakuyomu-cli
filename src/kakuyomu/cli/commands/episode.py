@@ -1,11 +1,10 @@
 """Episode commands"""
-import os
-
 import click
 
 from kakuyomu.client import Client
+from kakuyomu.types.path import Path
 
-client = Client(os.getcwd())
+client = Client(Path.cwd())
 
 
 @click.group()
@@ -23,11 +22,13 @@ def ls() -> None:
 
 @episode.command()
 @click.argument("filepath")
-def link(filepath: str) -> None:
+def link(file: str) -> None:
     """Link episodes"""
-    filepath = os.path.join(os.getcwd(), filepath)
+    cwd = Path.cwd()
+    path = Path(file)
+    filepath = Path.joinpath(cwd, path)
     config_dir = client.config_dir
-    relative_path = os.path.relpath(filepath, config_dir)
+    relative_path = config_dir.relative_to(filepath)
     try:
         episode = client.link_file(relative_path)
         print("linked", episode)
@@ -47,10 +48,11 @@ def unlink() -> None:
 
 @episode.command()
 @click.argument("title")
-@click.argument("file_path")
-def create(title: str, file_path: str) -> None:
+@click.argument("filepath")
+def create(title: str, file: str) -> None:
     """Create episode"""
-    client.create_remote_episode(title=title, file_path=file_path)
+    filepath = Path(file)
+    client.create_remote_episode(title=title, filepath=filepath)
     print(f"エピソードを作成しました: {title}")
 
 
