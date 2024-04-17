@@ -6,6 +6,7 @@ import coloredlogs
 
 from kakuyomu.client import Client
 from kakuyomu.logger import get_logger
+from kakuyomu.types.path import Path
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -24,7 +25,7 @@ class Case(enum.Enum):
 
 def createClient(case: Case) -> Client:
     """Create client"""
-    cwd = f"tests/testdata/{case.value}"
+    cwd = Path(f"tests/testdata/{case.value}")
     client = Client(cwd=cwd)
     if not client.status().is_login:
         client.login()

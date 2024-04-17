@@ -1,12 +1,11 @@
 """Work commands"""
 
-import os
-
 import click
 
 from kakuyomu.client import Client
+from kakuyomu.types.path import Path
 
-client = Client(os.getcwd())
+client = Client(Path.cwd())
 
 
 @click.group()

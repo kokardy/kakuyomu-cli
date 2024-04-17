@@ -5,17 +5,16 @@ Command line interface for kakuyomu.jp
 """
 
 
-import os
-
 import click
 
 from kakuyomu.client import Client
 from kakuyomu.types.errors import TOMLAlreadyExistsError
+from kakuyomu.types.path import Path
 
 from .episode import episode
 from .work import work
 
-client = Client(os.getcwd())
+client = Client(Path.cwd())
 
 
 @click.group()
