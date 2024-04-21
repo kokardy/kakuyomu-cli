@@ -59,7 +59,7 @@ class WorkTOMLNotExistsTest(Test):
         self.client.config_dir.work_toml.unlink(missing_ok=True)
 
 
-class NoEpisodesTest(Test):
+class NoEpisodeTest(Test):
     """エピソードが存在しない場合のテスト"""
 
     client: Client

@@ -8,7 +8,7 @@ from kakuyomu.types import LocalEpisode
 from kakuyomu.types.errors import EpisodeAlreadyLinkedError, EpisodeHasNoPathError
 from kakuyomu.types.path import Path
 
-from ..helper import EpisodeExistsTest, NoEpisodesTest
+from ..helper import EpisodeExistsTest, NoEpisodeTest
 
 episode_with_path = LocalEpisode(
     id="16816927859880032697",
@@ -22,7 +22,7 @@ episode_without_path = LocalEpisode(
 
 
 @pytest.mark.usefixtures("fake_get_episodes")
-class TestEpisodeNoEpisode(NoEpisodesTest):
+class TestNoEpisode(NoEpisodeTest):
     """Test in the case that no episode test"""
 
     def test_episode_list(self) -> None:
@@ -54,8 +54,10 @@ class TestEpisodeNoEpisode(NoEpisodesTest):
             self.client.link_file(file_path)
 
 
+
+
 @pytest.mark.usefixtures("fake_get_episodes")
-class TestEpisodeEpisodesExist(EpisodeExistsTest):
+class TestEpisodesExist(EpisodeExistsTest):
     """Test in the case that Episode exists test"""
 
     def test_episode_unlink(self, monkeypatch: pytest.MonkeyPatch) -> None:

@@ -102,3 +102,11 @@ class LoginStatus(BaseModel):
 
     is_login: bool
     email: str
+
+
+class Diff(BaseModel):
+    """Episodes diff model"""
+
+    appended: list[Episode] = []
+    removed: list[Episode] = []
+    updated: list[Episode] = []
