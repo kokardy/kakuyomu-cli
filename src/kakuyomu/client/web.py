@@ -15,7 +15,8 @@ from kakuyomu.scrapers.episode_page import EpisodePageScraper
 from kakuyomu.scrapers.my_page import MyPageScraper
 from kakuyomu.scrapers.work_page import WorkPageScraper
 from kakuyomu.settings import CONFIG_DIRNAME, URL, Login
-from kakuyomu.types import EpisodeId, LocalEpisode, LoginStatus, RemoteEpisode, Work, WorkId
+from kakuyomu.types import Diff, EpisodeId, LocalEpisode, LoginStatus, RemoteEpisode, Work, WorkId
+from kakuyomu.types.episode_query import Query
 from kakuyomu.types.errors import (
     CreateEpisodeFailedError,
     DeleteEpisodeFailedError,
@@ -131,6 +132,32 @@ class Client:
         csrf_token = scraper.scrape_csrf_token()
         self._toc_token = csrf_token
         return episodes
+
+    def fetch_remote_episodes(self) -> Diff:
+        """Fetch remote episodes"""
+        raise Exception("aaa")
+        before_episodes = self.work.episodes
+        print(f"{ before_episodes= }")
+
+        raise Exception("aaa")
+
+        episodes = []
+
+        for remote_episode in self.get_remote_episodes():
+            local_episode = self.get_local_episode_by_remote_episode(remote_episode)
+            episodes.append(local_episode)
+
+        print(f"{ episodes= }")
+
+        self.work.episodes = episodes
+        after_episodes = self.work.episodes
+
+        self._dump_work_toml(self.work)
+
+        before = Query(before_episodes)
+        after = Query(after_episodes)
+
+        return before.diff(after)
 
     def link_file(self, filepath: Path) -> LocalEpisode:
         """Link file"""

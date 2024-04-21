@@ -4,7 +4,7 @@ from typing import Callable
 from kakuyomu.client import Client
 from kakuyomu.types import LocalEpisode, RemoteEpisode, Work
 
-from ..helper import EpisodeExistsTest
+from ..helper import EpisodeExistsTest, NoEpisodeTest
 
 work = Work(
     id="16816927859498193192",
@@ -28,7 +28,7 @@ episodes = [
 ]
 
 
-class TestConnectToKakuyomu(EpisodeExistsTest):
+class TestEpisodesExist(EpisodeExistsTest):
     """
     kakuyomu.jpとの疎通を伴うテスト
 
@@ -147,3 +147,14 @@ class TestConnectToKakuyomu(EpisodeExistsTest):
         remote_episode = self.client.get_remote_episode(episode.id)
         assert new_title == remote_episode.title
         assert new_body == list(self.client._get_remote_episode_body(episode.id))
+
+
+class TestNoEpisode(NoEpisodeTest):
+    """kakuyomuとの疎通を伴うテスト.エピソードなし"""
+
+    def test_fetch(self) -> None:
+        """Fetch test"""
+        episodes = self.client.work.episodes
+        assert episodes
+        fetched = self.client.fetch_remote_episodes()
+        assert fetched
