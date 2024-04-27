@@ -154,7 +154,15 @@ class TestNoEpisode(NoEpisodeTest):
 
     def test_fetch(self) -> None:
         """Fetch test"""
-        episodes = self.client.work.episodes
-        assert episodes
-        fetched = self.client.fetch_remote_episodes()
-        assert fetched
+        before_episodes = self.client.work.episodes
+        assert not before_episodes
+        diff = self.client.fetch_remote_episodes()
+
+        assert diff.appended
+
+        after_episodes = self.client.work.episodes
+        assert after_episodes
+
+        remote_episodes = self.client.get_remote_episodes()
+
+        assert {episode.id for episode in remote_episodes} == {episode.id for episode in after_episodes}
