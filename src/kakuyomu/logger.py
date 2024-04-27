@@ -4,7 +4,7 @@ import logging
 import coloredlogs
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARN)
 
 handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)

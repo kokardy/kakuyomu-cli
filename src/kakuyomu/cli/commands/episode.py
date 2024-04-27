@@ -20,6 +20,13 @@ def ls() -> None:
         print(i, episode)
 
 
+@episode.command
+def fetch() -> None:
+    """Fetch remote episodes to work.toml"""
+    diff = client.fetch_remote_episodes()
+    print(diff)
+
+
 @episode.command()
 @click.argument("filepath")
 def link(file: str) -> None:
