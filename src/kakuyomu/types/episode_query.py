@@ -17,7 +17,7 @@ class Query:
         if self._exists_same_id(episodes):
             raise ValueError("Duplicated id")
         self._list = episodes
-        self._dist = {episode.id: episode for episode in episodes}
+        self._dict = {episode.id: episode for episode in episodes}
 
     def _exists_same_id(self, episodes: Sequence[Episode]) -> bool:
         """Validate episodes"""
@@ -34,7 +34,6 @@ class Query:
         removed = set(self._dict.keys()) - set(newer._dict.keys())
 
         updated = set()
-
         remains = set(self._dict.keys()) & set(newer._dict.keys())
 
         for remain in remains:
@@ -46,3 +45,6 @@ class Query:
             updated=[newer._dict[episode_id] for episode_id in updated],
         )
 
+    def __str__(self) -> str:
+        """Return string representation of the query"""
+        return "\n".join([episode.id for episode in self._list])
