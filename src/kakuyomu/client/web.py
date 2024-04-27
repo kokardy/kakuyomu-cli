@@ -4,7 +4,8 @@ Web client for kakuyomu
 This module is a web client for kakuyomu.jp.
 """
 import pickle
-from typing import Iterable
+import time
+from typing import Iterable, Sequence
 
 import requests
 import toml
@@ -15,7 +16,8 @@ from kakuyomu.scrapers.episode_page import EpisodePageScraper
 from kakuyomu.scrapers.my_page import MyPageScraper
 from kakuyomu.scrapers.work_page import WorkPageScraper
 from kakuyomu.settings import CONFIG_DIRNAME, URL, Login
-from kakuyomu.types import EpisodeId, LocalEpisode, LoginStatus, RemoteEpisode, Work, WorkId
+from kakuyomu.types import Diff, EpisodeId, LocalEpisode, LoginStatus, RemoteEpisode, Work, WorkId
+from kakuyomu.types.episode_query import Query
 from kakuyomu.types.errors import (
     CreateEpisodeFailedError,
     DeleteEpisodeFailedError,
@@ -41,10 +43,11 @@ class Client:
     cwd: Path
     config_dir: ConfigDir
 
-    def __init__(self, cwd: Path = Path.cwd()) -> None:
+    def __init__(self, cwd: Path = Path.cwd(), wait_time: float = 0.1) -> None:
         """Initialize web client"""
         self.session = requests.Session()
         self.cwd = cwd
+        self.wait_time = wait_time
         try:
             self.config_dir = self.cwd.config_dir
         except FileNotFoundError as e:
@@ -71,9 +74,11 @@ class Client:
         return Work.load(self.config_dir.work_toml)
 
     def _get(self, url: str, **kwargs) -> requests.Response:  # type: ignore
+        time.sleep(self.wait_time)
         return self.session.get(url, **kwargs)
 
     def _post(self, url: str, **kwargs) -> requests.Response:  # type: ignore
+        time.sleep(self.wait_time)
         if "headers" in kwargs:
             kwargs["headers"]["X-requested-With"] = "XMLHttpRequest"
         else:
@@ -121,7 +126,8 @@ class Client:
         works = MyPageScraper(html).scrape_works()
         return works
 
-    def get_remote_episodes(self) -> list[RemoteEpisode]:
+    @require_login
+    def get_remote_episodes(self) -> Sequence[RemoteEpisode]:
         """Get episodes and csrf token from work page"""
         work_id = self.work.id
         res = self._get(URL.MY_WORK.format(work_id=work_id))
@@ -132,6 +138,30 @@ class Client:
         self._toc_token = csrf_token
         return episodes
 
+    @require_login
+    def fetch_remote_episodes(self) -> Diff:
+        """Fetch remote episodes"""
+        before_episodes = self.work.episodes
+
+        episodes = []
+
+        for remote_episode in self.get_remote_episodes():
+            local_episode = self.get_local_episode_by_remote_episode(remote_episode)
+            episodes.append(local_episode)
+
+        work = self.work
+        work.episodes = episodes
+
+        after_episodes = work.episodes
+
+        self._dump_work_toml(work)
+
+        before = Query(before_episodes)
+        after = Query(after_episodes)
+
+        return before.diff(after)
+
+    @require_login
     def link_file(self, filepath: Path) -> LocalEpisode:
         """Link file"""
         try:
@@ -268,7 +298,13 @@ class Client:
             logger.error(f"{res=}")
             raise DeleteEpisodeFailedError(f"delete failed: {episodes=}")
 
-    # @require_login
+    @require_login
+    def update_remote_episode(self) -> RemoteEpisode:
+        """Update remote episodes"""
+        remote_episode = self._select_remote_episode()
+        self._update_remote_episode(remote_episode.id)
+        return remote_episode
+
     def _update_remote_episode(self, episode_id: EpisodeId, title: str = "", body: Iterable[str] = []) -> None:
         """
         Update remote episode
@@ -306,13 +342,6 @@ class Client:
             raise EpisodeUpdateFailedError(f"update failed: {res}")
 
     @require_login
-    def update_remote_episode(self) -> RemoteEpisode:
-        """Update remote episodes"""
-        remote_episode = self._select_remote_episode()
-        self._update_remote_episode(remote_episode.id)
-        return remote_episode
-
-    @require_login
     def initialize_work(self) -> None:
         """Initialize work"""
         # check if work toml already exists
@@ -334,9 +363,10 @@ class Client:
         except IndexError:
             raise ValueError("選択された番号が存在しません")
 
+    @require_login
     def get_remote_episode(self, episode_id: EpisodeId) -> RemoteEpisode:
         """Get remote episode"""
-        episodes = self.get_remote_episodes()
+        episodes: Sequence[RemoteEpisode] = self.get_remote_episodes()
         for episode in episodes:
             if episode.id == episode_id:
                 return episode
@@ -355,9 +385,6 @@ class Client:
     @require_login
     def get_remote_episode_body(self) -> Iterable[str]:
         """Get episode body"""
-        episodes = self.get_remote_episodes()
-        for i, remote_episode in enumerate(episodes):
-            print(f"{i}: {remote_episode}")
         try:
             remote_episode = self._select_remote_episode()
             body: Iterable[str] = self._get_remote_episode_body(remote_episode.id)
@@ -380,7 +407,7 @@ class Client:
 
     def _select_remote_episode(self) -> RemoteEpisode:
         """Select remote episode"""
-        episodes = self.get_remote_episodes()
+        episodes: Sequence[RemoteEpisode] = self.get_remote_episodes()
         for i, episode in enumerate(episodes):
             print(f"{i}: {episode}")
         try:
