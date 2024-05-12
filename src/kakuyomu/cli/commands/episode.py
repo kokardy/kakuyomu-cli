@@ -101,4 +101,4 @@ def update() -> None:
 @episode.command()
 def publish(publish_at_str: str) -> None:
     """Publish episode"""
-    # client.publish_episode()
+    raise NotImplementedError("未実装")
