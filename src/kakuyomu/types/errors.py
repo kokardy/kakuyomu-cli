@@ -29,11 +29,11 @@ class EpisodeUpdateFailedError(Exception):
     """Episode update error"""
 
 
-class CreateEpisodeFailedError(Exception):
+class EpisodeCreateFailedError(Exception):
     """Create episode error"""
 
 
-class DeleteEpisodeFailedError(Exception):
+class EpisodeDeleteFailedError(Exception):
     """Episode delete error"""
 
 
