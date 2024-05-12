@@ -1,4 +1,5 @@
 """Test for login"""
+import datetime
 from typing import Callable
 
 from kakuyomu.client import Client
@@ -147,6 +148,38 @@ class TestEpisodesExist(EpisodeExistsTest):
         remote_episode = self.client.get_remote_episode(episode.id)
         assert new_title == remote_episode.title
         assert new_body == list(self.client._get_remote_episode_body(episode.id))
+
+    def test_publish_episode(self) -> None:
+        """
+        Publish episode test
+
+        エピソードを公開する
+        公開されたエピソードの内容を取得して検証する
+        """
+        now = datetime.datetime.now()
+        publish_at = now + datetime.timedelta(days=100)
+        publish_at = publish_at.replace(second=0, microsecond=0)
+
+        # 未公開確認
+        scraper = self.client.session.episode_page(self.client.work.id, episode.id)
+        episode_status = scraper.scrape_status()
+        assert datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time) != publish_at
+
+        # 公開
+        self.client._reserve_publishing_episode(episode.id, publish_at)
+
+        # 公開確認
+        scraper = self.client.session.episode_page(self.client.work.id, episode.id)
+        episode_status = scraper.scrape_status()
+        assert datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time) == publish_at
+
+        # 戻す
+        self.client._cancel_reservation(episode.id)
+
+        # 未公開確認
+        scraper = self.client.session.episode_page(self.client.work.id, episode.id)
+        episode_status = scraper.scrape_status()
+        assert datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time) != publish_at
 
 
 class TestNoEpisode(NoEpisodeTest):

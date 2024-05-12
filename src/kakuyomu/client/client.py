@@ -415,3 +415,24 @@ class Client:
         """Publish episode"""
         episode = self._select_remote_episode()
         self._reserve_publishing_episode(episode.id, publish_at)
+
+    def cancel_reservation(self) -> None:
+        """Cancel reservation"""
+        episode = self._select_remote_episode()
+        self._cancel_reservation(episode.id)
+
+    def _cancel_reservation(self, episode_id: EpisodeId) -> None:
+        """Cancel reservation"""
+        scraper = self.session.episode_page(self.work.id, episode_id)
+        csrf_token = scraper.scrape_csrf_token()
+        title = scraper.scrape_title()
+        body = scraper.scrape_body()
+
+        status = EpisodeStatus.for_cancel_reservation()
+        request_body = UpdateEpisodeRequest.create_from_status(
+            csrf_token=csrf_token,
+            title=title,
+            body=body,
+            status=status,
+        )
+        self.session.update_episode(self.work.id, episode_id, request_body)
