@@ -1,49 +1,10 @@
 """Module for scraping episode page."""
-from dataclasses import dataclass
+from typing import Any
 
 import bs4
 
 from kakuyomu.types.errors import EpisodeBodyNotFoundError
-
-"""
-* Example
-  * status="draft"
-  * edit_reservation="0"
-  * keep_editing="1"
-  * reservation=""
-  * reservation_date="2024-03-17"
-  * reservation_time="16:00"
-"""
-keys = [
-    "status",
-    "edit_reservation",
-    "keep_editing",
-    "reservation",
-    "reservation_date",
-    "reservation_time",
-]
-
-
-@dataclass
-class EpisodeStatus:
-    """
-    Episode status
-
-    * Example
-      * status="draft"
-      * edit_reservation="0"
-      * keep_editing="1"
-      * reservation=""
-      * reservation_date="2024-03-17"
-      * reservation_time="16:00"
-    """
-
-    status: str
-    edit_reservation: str
-    keep_editing: str
-    reservation: str
-    reservation_date: str
-    reservation_time: str
+from kakuyomu.types.work import EpisodeStatus
 
 
 class EpisodePageScraper:
@@ -55,6 +16,16 @@ class EpisodePageScraper:
         """Initialize"""
         self.html = html
         self.soup = bs4.BeautifulSoup(self.html, "html.parser")
+
+    def scrape_title(self) -> str:
+        """Scrape title from episode page"""
+        tag = self.soup.select_one("input[name='title']")
+        if not tag:
+            raise ValueError("title not found")
+        title = tag.get("value")
+        if not isinstance(title, str):
+            raise ValueError("title is not str")
+        return title
 
     def scrape_body(self) -> str:
         """Scrape body text from episode page"""
@@ -76,10 +47,10 @@ class EpisodePageScraper:
             raise ValueError("csrf_token is not str")
         return csrf_token
 
-    def scrape_status(self) -> dict[str, str]:
+    def scrape_status(self) -> EpisodeStatus:
         """Scrape status"""
-        episode_status: dict[str, str] = {}
-        for key in keys:
+        episode_status: dict[str, Any] = {}
+        for key in EpisodeStatus.fields():
             tag = self.soup.select_one(f"input[name='{key}']")
             if not tag:
                 raise ValueError(f"{key} not found")
@@ -87,4 +58,5 @@ class EpisodePageScraper:
             if not isinstance(value, str):
                 raise ValueError(f"{key} is not str")
             episode_status[key] = value
-        return episode_status
+
+        return EpisodeStatus(**episode_status)

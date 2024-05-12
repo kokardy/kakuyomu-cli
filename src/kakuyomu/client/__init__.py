@@ -1,5 +1,5 @@
 """Module for web client"""
 
-from .web import Client
+from .client import Client
 
 __all__ = ["Client"]

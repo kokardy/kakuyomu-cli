@@ -3,7 +3,7 @@
 
 import pytest
 
-from kakuyomu.client.web import Client
+from kakuyomu.client import Client
 
 from .helper import Case, createClient, set_color
 
