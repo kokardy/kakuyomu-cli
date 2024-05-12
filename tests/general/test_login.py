@@ -62,7 +62,7 @@ class TestEpisodesExist(EpisodeExistsTest):
         super().teardown_method(method)
         current_episodes = self.client.get_remote_episodes()
         delete_ids = [_episode.id for _episode in current_episodes if _episode.id not in {e.id for e in episodes}]
-        self.client.delete_remote_episodes(episodes=delete_ids)
+        self.client.delete_remote_episodes(episode_ids=delete_ids)
 
     def test_status_not_login(self, logout_client: Client) -> None:
         """Test status not login"""
@@ -109,7 +109,7 @@ class TestEpisodesExist(EpisodeExistsTest):
         assert len(diff) == 1
         new_episode = diff.pop()
 
-        client.delete_remote_episodes(episodes=[new_episode.id])
+        client.delete_remote_episodes(episode_ids=[new_episode.id])
 
         final_episodes = client.get_remote_episodes()
         assert len(before_episodes) == len(final_episodes)
