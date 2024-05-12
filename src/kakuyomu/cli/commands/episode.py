@@ -1,4 +1,6 @@
 """Episode commands"""
+import datetime
+
 import click
 
 from kakuyomu.client import Client
@@ -99,6 +101,13 @@ def update() -> None:
 
 
 @episode.command()
+@click.argument("publish_at_str")
 def publish(publish_at_str: str) -> None:
     """Publish episode"""
-    raise NotImplementedError("未実装")
+    date_format = "%Y/%m/%d %H:%M"
+    try:
+        publish_at = datetime.datetime.strptime(publish_at_str, date_format)
+    except ValueError as e:
+        print(f"日時は{date_format}の形式で入力してください: {e}")
+        return
+    client.reserve_publishing_episode(publish_at)

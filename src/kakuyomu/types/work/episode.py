@@ -3,7 +3,7 @@ import datetime
 from collections.abc import Iterable
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, PlainSerializer, PlainValidator, ValidationInfo
+from pydantic import BaseModel, ConfigDict, PlainSerializer, PlainValidator, ValidationInfo, field_serializer
 
 from kakuyomu.types.path import Path
 
@@ -41,6 +41,24 @@ class EpisodeStatus(BaseModel):
             "reservation_time",
         ]
 
+    @field_serializer("reservation_date")
+    def date_serializer(self, value: datetime.date) -> str:
+        """
+        Serialize date
+
+        シリアライズ時にNoneを空文字に変換
+        """
+        return value.strftime("%Y/%m/%d")
+
+    @field_serializer("reservation_time")
+    def time_serializer(self, value: datetime.time) -> str:
+        """
+        Serialize time
+
+        シリアライズ時にNoneを空文字に変換
+        """
+        return value.strftime("%H:%M")
+
     @classmethod
     def for_reservation(cls, publish_at: datetime.datetime) -> "EpisodeStatus":
         """
@@ -71,13 +89,9 @@ class EpisodeStatus(BaseModel):
         )
 
     @classmethod
-    def for_cancel_reservation(cls, publish_at: datetime.datetime) -> "EpisodeStatus":
+    def for_cancel_reservation(cls) -> "EpisodeStatus":
         """
         Create status for reservation cancel
-
-        Args:
-        ----
-            publish_at: reservation time for cancel
 
         Example:
         -------
@@ -92,13 +106,16 @@ class EpisodeStatus(BaseModel):
         -------
             EpisodeStatus: status for reservation cancel
         """
+        reservation_date = datetime.date.today() + datetime.timedelta(days=2)
+        reservation_time = datetime.time(0, 0, 0)
+
         return cls(
             status="draft",
             edit_reservation=1,
             keep_editing=0,
             reservation="cancel",
-            reservation_date=publish_at.date(),
-            reservation_time=publish_at.time(),
+            reservation_date=reservation_date,
+            reservation_time=reservation_time,
         )
 
 
