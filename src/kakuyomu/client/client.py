@@ -279,6 +279,7 @@ class Client:
         Raises:
         ------
             EpisodeUpdateFailedError: error occurred while updating episode
+
         """
         local_episode = self.get_episode_by_id(episode_id)
 
@@ -354,8 +355,12 @@ class Client:
         if toml_path.exists():
             logger.info(f"work toml {toml_path=} already exists. override {work}")
 
-        with open(toml_path, "w") as f:
-            toml.dump(work.model_dump(), f)
+        try:
+            with open(toml_path, "w") as f:
+                toml.dump(work.model_dump(), f)
+        except IOError as e:
+            logger.error(f"ファイル書き込みエラー: {e}")
+            raise
 
         logger.info(f"dump work toml: {work}")
 
@@ -373,9 +378,6 @@ class Client:
             raise ValueError("数字を入力してください")
         except IndexError:
             raise ValueError("選択された番号が存在しません")
-        except Exception as e:
-            logger.error(f"予期しないエラー: {e}")
-            raise e
 
     def _select_local_episode(self) -> LocalEpisode:
         """Select local episode"""
@@ -390,9 +392,6 @@ class Client:
             raise ValueError("数字を入力してください")
         except IndexError:
             raise ValueError("選択された番号が存在しません")
-        except Exception as e:
-            logger.error(f"予期しないエラー: {e}")
-            raise e
 
     def _reserve_publishing_episode(self, episode_id: EpisodeId, publish_at: datetime.datetime) -> None:
         """Publish episode"""
@@ -403,16 +402,11 @@ class Client:
 
         status = EpisodeStatus.for_reservation(publish_at)
 
-        request_body = UpdateEpisodeRequest(
+        request_body = UpdateEpisodeRequest.create_from_status(
             csrf_token=csrf_token,
             title=title,
             body=body,
-            status=status.status,
-            edit_reservation=status.edit_reservation,
-            keep_editing=status.keep_editing,
-            reservation=status.reservation,
-            reservation_date=status.reservation_date,
-            reservation_time=status.reservation_time,
+            status=status,
         )
 
         self.session.update_episode(self.work.id, episode_id, request_body)

@@ -32,7 +32,7 @@ class MyPageScraper:
             assert user
             author = user.select_one("div[itemprop='author']")
             assert author
-        except Exception as e:
+        except AssertionError as e:
             print(e)
             return ""
         return author.text
