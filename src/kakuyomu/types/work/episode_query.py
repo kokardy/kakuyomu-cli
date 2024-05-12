@@ -1,8 +1,17 @@
 """Episode query"""
 
 from collections.abc import Sequence
+from pydantic import BaseModel
 
-from .work import Diff, Episode, EpisodeId
+from .episode import Episode, EpisodeId
+
+
+class Diff(BaseModel):
+    """Episodes diff model"""
+
+    appended: list[Episode] = []
+    removed: list[Episode] = []
+    updated: list[Episode] = []
 
 
 class Query:

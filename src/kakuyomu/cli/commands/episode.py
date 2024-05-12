@@ -99,7 +99,6 @@ def update() -> None:
 
 
 @episode.command()
-def publish() -> None:
+def publish(publish_at_str: str) -> None:
     """Publish episode"""
     # client.publish_episode()
-    print("not implemented yet")

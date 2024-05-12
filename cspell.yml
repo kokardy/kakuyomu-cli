@@ -7,6 +7,9 @@ words:
   - pydantic
   - pytest
   - usefixtures
+  - itemprop
+  - coloredlogs
+  - levelname
 # ignoreRegExpList:
 #   - >-
 #     /id:.*/g
