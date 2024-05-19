@@ -52,9 +52,7 @@ class EpisodePageScraper:
         episode_status: dict[str, Any] = {}
         for key in EpisodeStatus.fields():
             tag = self.soup.select_one(f"input[name='{key}']")
-            if not tag:
-                raise ValueError(f"{key} not found")
-            value = tag.get("value")
+            value = tag.get("value") if tag else ""
             if not isinstance(value, str):
                 raise ValueError(f"{key} is not str")
             episode_status[key] = value
