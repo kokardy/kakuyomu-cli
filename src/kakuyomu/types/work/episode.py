@@ -1,7 +1,7 @@
 """Define types around episode"""
 import datetime
 from collections.abc import Iterable
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, PlainSerializer, PlainValidator, ValidationInfo, field_serializer
 
@@ -17,8 +17,8 @@ class EpisodeStatus(BaseModel):
     edit_reservation: int
     keep_editing: int
     reservation: str
-    reservation_date: datetime.date
-    reservation_time: datetime.time
+    reservation_date: datetime.date | Literal[""]
+    reservation_time: datetime.time | Literal[""]
 
     # @model_validator  # type: ignore
     # def verify_reservation(self) -> None:
@@ -42,21 +42,25 @@ class EpisodeStatus(BaseModel):
         ]
 
     @field_serializer("reservation_date")
-    def date_serializer(self, value: datetime.date) -> str:
+    def date_serializer(self, value: datetime.date | str) -> str:
         """
         Serialize date
 
         シリアライズ時にNoneを空文字に変換
         """
+        if isinstance(value, str):
+            return value
         return value.strftime("%Y/%m/%d")
 
     @field_serializer("reservation_time")
-    def time_serializer(self, value: datetime.time) -> str:
+    def time_serializer(self, value: datetime.time | str) -> str:
         """
         Serialize time
 
         シリアライズ時にNoneを空文字に変換
         """
+        if isinstance(value, str):
+            return value
         return value.strftime("%H:%M")
 
     @classmethod
