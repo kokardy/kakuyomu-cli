@@ -41,5 +41,5 @@ class EpisodeBodyNotFoundError(Exception):
     """Episode body not found error"""
 
 
-class EpisodePublishReserveError(Exception):
+class EpisodeReservePublishError(Exception):
     """Episode publish reserve error"""

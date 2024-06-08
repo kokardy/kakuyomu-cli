@@ -4,6 +4,7 @@ import datetime
 import click
 
 from kakuyomu.client import Client
+from kakuyomu.types.errors import EpisodeReservePublishError
 from kakuyomu.types.path import Path
 
 client = Client(Path.cwd())
@@ -110,7 +111,10 @@ def publish(publish_at_str: str) -> None:
     date_format = "%Y/%m/%d %H:%M"
     try:
         publish_at = datetime.datetime.strptime(publish_at_str, date_format)
+        client.reserve_publishing_episode(publish_at)
+    except EpisodeReservePublishError as e:
+        print(f"予約公開/キャンセルに失敗しました: {e}")
     except ValueError as e:
         print(f"日時は{date_format}の形式で入力してください: {e}")
-        return
-    client.reserve_publishing_episode(publish_at)
+    except Exception as e:
+        print(f"予期しないエラー: {e}")
