@@ -19,20 +19,24 @@ def fake_get_works(mocker: MockFixture) -> None:
 
 
 @pytest.fixture
-def fake_get_episodes(mocker: MockFixture) -> None:
+def fake_get_remote_episodes(mocker: MockFixture) -> None:
     """Mock the get method of the requests module."""
     episodes: list[RemoteEpisode] = [
         RemoteEpisode(
             id="16816927859859822600",
-            title="第1話",
+            title="ルビテスト",
         ),
         RemoteEpisode(
             id="16816927859880032697",
-            title="第4話",
+            title="傍点テスト",
         ),
         RemoteEpisode(
             id="16816927859880026113",
-            title="第2話",
+            title="公開予約テスト",
+        ),
+        RemoteEpisode(
+            id="16816927859880029939",
+            title="編集テスト",
         ),
     ]
     mocker.patch.object(Client, "get_remote_episodes", return_value=episodes)
