@@ -29,7 +29,7 @@ jobs:
     - name: Install the latest version of rye
       uses: eifinger/setup-rye@v3
       with:
-        enable-cache: true
+        version: 'latest'
     - name: python version
       run: rye pin 3.12
     - name: Install dependencies
