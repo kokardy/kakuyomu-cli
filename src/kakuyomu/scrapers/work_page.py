@@ -1,19 +1,13 @@
 """Scrape work page."""
 
-import bs4
 
 from kakuyomu.types import RemoteEpisode
 
+from .base import ScraperBase
 
-class WorkPageScraper:
+
+class WorkPageScraper(ScraperBase):
     """Class for scrape work page."""
-
-    html: str
-
-    def __init__(self, html: str):
-        """Initialize WorkPageScraper"""
-        self.html = html
-        self.soup = bs4.BeautifulSoup(html, "html.parser")
 
     def scrape_episodes(self) -> list[RemoteEpisode]:
         """Scrape episodes from work page"""

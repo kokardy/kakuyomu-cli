@@ -104,6 +104,9 @@ def update() -> None:
 @click.argument("publish_at_str")
 def publish(publish_at_str: str) -> None:
     """Publish episode"""
+    if publish_at_str == "cancel":
+        client.cancel_reservation()
+        return
     date_format = "%Y/%m/%d %H:%M"
     try:
         publish_at = datetime.datetime.strptime(publish_at_str, date_format)
