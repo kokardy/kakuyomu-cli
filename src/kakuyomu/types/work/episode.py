@@ -1,10 +1,11 @@
 """Define types around episode"""
 import datetime
 from collections.abc import Iterable
-from typing import Annotated, Literal
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, PlainSerializer, PlainValidator, ValidationInfo, field_serializer
+from pydantic import BaseModel, ConfigDict, PlainSerializer, PlainValidator, ValidationInfo
 
+from kakuyomu.settings.const import JST
 from kakuyomu.types.path import Path
 
 type EpisodeId = str  # type: ignore
@@ -16,18 +17,7 @@ class EpisodeStatus(BaseModel):
     status: str
     edit_reservation: int
     keep_editing: int
-    reservation: str
-    reservation_date: datetime.date | Literal[""]
-    reservation_time: datetime.time | Literal[""]
-
-    # @model_validator  # type: ignore
-    # def verify_reservation(self) -> None:
-    #     """Check reservation"""
-    #     # 予約日が過去の場合はエラー
-    #     now = datetime.datetime.now()
-    #     reservation_at = datetime.datetime.combine(self.reservation_date, self.reservation_time)
-    #     if now > reservation_at:
-    #         raise ValueError(f"予約日が過去: {now=}, {reservation_at=}")
+    use_reservation: int = 1
 
     @staticmethod
     def fields() -> list[str]:
@@ -36,91 +26,28 @@ class EpisodeStatus(BaseModel):
             "status",
             "edit_reservation",
             "keep_editing",
-            "reservation",
-            "reservation_date",
-            "reservation_time",
+            "use_reservation",
         ]
 
-    @field_serializer("reservation_date")
-    def date_serializer(self, value: datetime.date | str) -> str:
-        """
-        Serialize date
 
-        シリアライズ時にNoneを空文字に変換
-        """
-        if isinstance(value, str):
-            return value
-        return value.strftime("%Y/%m/%d")
+class PublishReservationStatus(BaseModel):
+    """公開予約ステータス"""
 
-    @field_serializer("reservation_time")
-    def time_serializer(self, value: datetime.time | str) -> str:
-        """
-        Serialize time
-
-        シリアライズ時にNoneを空文字に変換
-        """
-        if isinstance(value, str):
-            return value
-        return value.strftime("%H:%M")
+    scheduled_at: datetime.datetime | None
 
     @classmethod
-    def for_reservation(cls, publish_at: datetime.datetime) -> "EpisodeStatus":
+    def from_str(cls, scheduled_str: str | None) -> "PublishReservationStatus":
         """
-        Create status for reservation
+        Set schedule from string
 
-        Example:
-        -------
-            status: draft
-            edit_reservation: 1
-            keep_editing: 0
-            reservation: publishing
-            reservation_date: 2024-05-23
-            reservation_time: 17:00
-        Args:
-            publish_at: time to publish
-
-        Returns:
-        -------
-            EpisodeStatus: status for reservation
+        "toBePublishedAt": "2024-07-04T09:00:37Z"
         """
-        return cls(
-            status="draft",
-            edit_reservation=1,
-            keep_editing=0,
-            reservation="publishing",
-            reservation_date=publish_at.date(),
-            reservation_time=publish_at.time(),
-        )
+        if scheduled_str is None:
+            return cls(scheduled_at=None)
+        schedule_datetime = datetime.datetime.fromisoformat(scheduled_str)
+        schedule_datetime = schedule_datetime.astimezone(JST)
 
-    @classmethod
-    def for_cancel_reservation(cls) -> "EpisodeStatus":
-        """
-        Create status for reservation cancel
-
-        Example:
-        -------
-            status: draft
-            edit_reservation: 1
-            keep_editing: 0
-            reservation_date: 2024-05-23
-            reservation_time: 17:00
-            reservation: cancel
-
-        Returns:
-        -------
-            EpisodeStatus: status for reservation cancel
-        """
-        reservation_date = datetime.date.today() + datetime.timedelta(days=2)
-        reservation_time = datetime.time(0, 0, 0)
-
-        return cls(
-            status="draft",
-            edit_reservation=1,
-            keep_editing=0,
-            reservation="cancel",
-            reservation_date=reservation_date,
-            reservation_time=reservation_time,
-        )
+        return cls(scheduled_at=schedule_datetime)
 
 
 class Episode(BaseModel):

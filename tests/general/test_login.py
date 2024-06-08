@@ -161,35 +161,31 @@ class TestEpisodesExist(EpisodeExistsTest):
         publish_at = publish_at.replace(second=0, microsecond=0)
 
         # 未公開確認
-        scraper = self.client.session.episode_page(self.client.work.id, episode.id)
+        scraper = self.client.session.publish_page(self.client.work.id, episode.id)
         episode_status = scraper.scrape_status()
-        if episode_status.reservation_date and episode_status.reservation_time:
-            reserved_at = datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time)
+        if episode_status:
+            reserved_at = episode_status.scheduled_at
             assert reserved_at != publish_at
 
         # 公開
         self.client._reserve_publishing_episode(episode.id, publish_at)
 
         # 公開確認
-        scraper = self.client.session.episode_page(self.client.work.id, episode.id)
+        scraper = self.client.session.publish_page(self.client.work.id, episode.id)
         episode_status = scraper.scrape_status()
-        assert episode_status.reservation_date
-        assert episode_status.reservation_time
-        episode_status = scraper.scrape_status()
-        assert episode_status.reservation_date
-        assert episode_status.reservation_time
-        reserved_at = datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time)
-        assert reserved_at == publish_at
+
+        assert episode_status.scheduled_at
+        assert episode_status.scheduled_at.hour == publish_at.hour
+        assert episode_status.scheduled_at.minute == publish_at.minute
 
         # 戻す
         self.client._cancel_reservation(episode.id)
 
         # 未公開確認
-        scraper = self.client.session.episode_page(self.client.work.id, episode.id)
+        scraper = self.client.session.publish_page(self.client.work.id, episode.id)
         episode_status = scraper.scrape_status()
-        if episode_status.reservation_date and episode_status.reservation_time:
-            reserved_at = datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time)
-            assert reserved_at != publish_at
+        assert episode_status
+        assert episode_status.scheduled_at is None
 
 
 class TestNoEpisode(NoEpisodeTest):

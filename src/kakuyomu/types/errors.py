@@ -39,3 +39,7 @@ class EpisodeDeleteFailedError(Exception):
 
 class EpisodeBodyNotFoundError(Exception):
     """Episode body not found error"""
+
+
+class EpisodeReservePublishError(Exception):
+    """Episode publish reserve error"""
