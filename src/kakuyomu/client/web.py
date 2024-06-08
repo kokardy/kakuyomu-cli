@@ -18,7 +18,7 @@ from kakuyomu.settings import URL
 from kakuyomu.types.errors import (
     EpisodeCreateFailedError,
     EpisodeDeleteFailedError,
-    EpisodePublishReserveError,
+    EpisodeReservePublishError,
     EpisodeUpdateFailedError,
 )
 from kakuyomu.types.work import EpisodeId, WorkId
@@ -101,7 +101,6 @@ class Session(requests.Session):
         time.sleep(self.wait_time)
         url = self.episode_url(work_id, episode_id)
         res = self.post(url, data=request.model_dump())
-        print(f"{res.status_code=} {res.text=}")
         if res.status_code != http.HTTPStatus.OK:
             logger.error(f"{res.status_code=} {res.text=}")
             raise EpisodeUpdateFailedError(f"update failed: {res}")
@@ -128,7 +127,7 @@ class Session(requests.Session):
         res = self.post(url, headers=headers, json=request.model_dump())
         if res.status_code != http.HTTPStatus.OK:
             logger.error(f"{res.status_code=} {res.text=}")
-            raise EpisodePublishReserveError(f"delete failed: {res}")
+            raise EpisodeReservePublishError(f"delete failed: {res}")
         logger.info(f"PUBLISH {episode_id}: {res.status_code=} {res.text=}")
 
     def login(self, email: str, password: str) -> requests.Response:
