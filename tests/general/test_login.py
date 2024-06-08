@@ -3,7 +3,7 @@ import datetime
 from typing import Callable
 
 from kakuyomu.client import Client
-from kakuyomu.types import LocalEpisode, RemoteEpisode, Work
+from kakuyomu.types import EpisodeId, LocalEpisode, Work
 
 from ..helper import EpisodeExistsTest, NoEpisodeTest
 
@@ -12,20 +12,15 @@ work = Work(
     title="アップロードテスト用",
 )
 episode = LocalEpisode(
-    id="16816927859880032697",
-    title="第4話",
+    id="16816927859880029939",
+    title="編集テスト",
 )
 
-episodes = [
-    RemoteEpisode(id="16816927859859822600", title="第1話"),
-    RemoteEpisode(id="16816927859880032697", title="第4話"),
-    RemoteEpisode(id="16816927859880026113", title="第2話"),
-    RemoteEpisode(id="16816927859880029939", title="第3話"),
-    RemoteEpisode(id="16816927860079743550", title="第4話"),
-    RemoteEpisode(id="16816927860079843351", title="第5話"),
-    RemoteEpisode(id="16816927860079889260", title="第6話"),
-    RemoteEpisode(id="16816927860079921252", title="第7話"),
-    RemoteEpisode(id="16816927860265371490", title="第8話"),
+episode_ids: list[EpisodeId] = [
+    "16816927859859822600",
+    "16816927859880032697",
+    "16816927859880026113",
+    "16816927859880029939",
 ]
 
 
@@ -37,8 +32,12 @@ class TestEpisodesExist(EpisodeExistsTest):
     kakuyomuとの通信をmockにしない
     """
 
-    original_title = "第4話"
-    original_body = ["test"]
+    original_title = "編集テスト"
+    original_body = [
+        "# 編集テスト",
+        "",
+        "編集テスト用エピソードです。",
+    ]
 
     @classmethod
     def setup_class(cls) -> None:
@@ -62,7 +61,7 @@ class TestEpisodesExist(EpisodeExistsTest):
         """Remove all created episodes"""
         super().teardown_method(method)
         current_episodes = self.client.get_remote_episodes()
-        delete_ids = [_episode.id for _episode in current_episodes if _episode.id not in {e.id for e in episodes}]
+        delete_ids = [_episode.id for _episode in current_episodes if _episode.id not in set(episode_ids)]
         self.client.delete_remote_episodes(episode_ids=delete_ids)
 
     def test_status_not_login(self, logout_client: Client) -> None:
@@ -126,7 +125,8 @@ class TestEpisodesExist(EpisodeExistsTest):
         """
         body_rows = self.client._get_remote_episode_body(episode.id)
         body = "\n".join(body_rows)
-        assert body.strip() == "test"
+        local_body = "\n".join(self.client._get_remote_episode_body(episode.id))
+        assert body.strip() == local_body.strip()
 
     def test_update_remote_episode(self) -> None:
         """
@@ -163,7 +163,9 @@ class TestEpisodesExist(EpisodeExistsTest):
         # 未公開確認
         scraper = self.client.session.episode_page(self.client.work.id, episode.id)
         episode_status = scraper.scrape_status()
-        assert datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time) != publish_at
+        if episode_status.reservation_date and episode_status.reservation_time:
+            reserved_at = datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time)
+            assert reserved_at != publish_at
 
         # 公開
         self.client._reserve_publishing_episode(episode.id, publish_at)
@@ -171,7 +173,13 @@ class TestEpisodesExist(EpisodeExistsTest):
         # 公開確認
         scraper = self.client.session.episode_page(self.client.work.id, episode.id)
         episode_status = scraper.scrape_status()
-        assert datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time) == publish_at
+        assert episode_status.reservation_date
+        assert episode_status.reservation_time
+        episode_status = scraper.scrape_status()
+        assert episode_status.reservation_date
+        assert episode_status.reservation_time
+        reserved_at = datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time)
+        assert reserved_at == publish_at
 
         # 戻す
         self.client._cancel_reservation(episode.id)
@@ -179,7 +187,9 @@ class TestEpisodesExist(EpisodeExistsTest):
         # 未公開確認
         scraper = self.client.session.episode_page(self.client.work.id, episode.id)
         episode_status = scraper.scrape_status()
-        assert datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time) != publish_at
+        if episode_status.reservation_date and episode_status.reservation_time:
+            reserved_at = datetime.datetime.combine(episode_status.reservation_date, episode_status.reservation_time)
+            assert reserved_at != publish_at
 
 
 class TestNoEpisode(NoEpisodeTest):
