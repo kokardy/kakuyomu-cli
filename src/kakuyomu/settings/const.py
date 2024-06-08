@@ -1,8 +1,11 @@
 """CLI Settings"""
 import os
+import zoneinfo
 from typing import Any, Final
 
 from kakuyomu.logger import get_logger
+
+JST: Final[zoneinfo.ZoneInfo] = zoneinfo.ZoneInfo("Asia/Tokyo")
 
 logger = get_logger()
 CONFIG_DIRNAME: Final[str] = ".kakuyomu"
@@ -33,10 +36,11 @@ class URL(metaclass=ConstMeta):
     LOGIN: Final[str] = f"{ROOT}/login"
     MY: Final[str] = f"{ROOT}/my"
     MY_WORK: Final[str] = f"{MY}/works/{{work_id}}"
-    ANNTENA_WORKS: Final[str] = f"{ROOT}/anntena/works"
     NEW_EPISODE: Final[str] = f"{MY_WORK}/episodes/new"
     EDIT_TOC: Final[str] = f"{MY_WORK}/edit_toc_bulk"
     EPISODE: Final[str] = f"{MY_WORK}/episodes/{{episode_id}}"
+    PUBLISH: Final[str] = f"{EPISODE}/publish"
+    OPERATION: Final[str] = f"{ROOT}/graphql?opname={{opname}}"
 
 
 class Login(metaclass=ConstMeta):

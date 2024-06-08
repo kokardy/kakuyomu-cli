@@ -15,20 +15,10 @@ from kakuyomu.types.errors import (
     TOMLAlreadyExistsError,
 )
 from kakuyomu.types.path import ConfigDir, Path
-from kakuyomu.types.work import (
-    Diff,
-    EpisodeId,
-    EpisodeStatus,
-    LocalEpisode,
-    LoginStatus,
-    Query,
-    RemoteEpisode,
-    Work,
-    WorkId,
-)
+from kakuyomu.types.work import Diff, EpisodeId, LocalEpisode, LoginStatus, Query, RemoteEpisode, Work, WorkId
 
 from .decorators import require_login
-from .request_models import CreateEpisodeRequest, DeleteEpisodesRequest, UpdateEpisodeRequest
+from .request_models import CreateEpisodeRequest, DeleteEpisodesRequest, PublishRequest, UpdateEpisodeRequest
 from .web import Session
 
 logger = get_logger()
@@ -289,6 +279,7 @@ class Client:
         scraper = self.session.episode_page(self.work.id, episode_id)
         csrf_token = scraper.scrape_csrf_token()
         status = scraper.scrape_status()
+        print(f"{status=}")
         request_body = UpdateEpisodeRequest.create_from_status(
             csrf_token=csrf_token,
             title=local_title,
@@ -395,21 +386,12 @@ class Client:
 
     def _reserve_publishing_episode(self, episode_id: EpisodeId, publish_at: datetime.datetime) -> None:
         """Publish episode"""
-        scraper = self.session.episode_page(self.work.id, episode_id)
-        csrf_token = scraper.scrape_csrf_token()
-        title = scraper.scrape_title()
-        body = scraper.scrape_body()
-
-        status = EpisodeStatus.for_reservation(publish_at)
-
-        request_body = UpdateEpisodeRequest.create_from_status(
-            csrf_token=csrf_token,
-            title=title,
-            body=body,
-            status=status,
+        request_body = PublishRequest.create(
+            episode_id=episode_id,
+            publish_at=publish_at,
         )
 
-        self.session.update_episode(self.work.id, episode_id, request_body)
+        self.session.publish_reserve(self.work.id, episode_id, request_body)
 
     def reserve_publishing_episode(self, publish_at: datetime.datetime) -> None:
         """Publish episode"""
@@ -423,16 +405,8 @@ class Client:
 
     def _cancel_reservation(self, episode_id: EpisodeId) -> None:
         """Cancel reservation"""
-        scraper = self.session.episode_page(self.work.id, episode_id)
-        csrf_token = scraper.scrape_csrf_token()
-        title = scraper.scrape_title()
-        body = scraper.scrape_body()
-
-        status = EpisodeStatus.for_cancel_reservation()
-        request_body = UpdateEpisodeRequest.create_from_status(
-            csrf_token=csrf_token,
-            title=title,
-            body=body,
-            status=status,
+        request_body = PublishRequest.create(
+            episode_id=episode_id,
+            publish_at=None,
         )
-        self.session.update_episode(self.work.id, episode_id, request_body)
+        self.session.publish_reserve(self.work.id, episode_id, request_body)
