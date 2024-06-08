@@ -54,7 +54,6 @@ class TestNoEpisode(NoEpisodeTest, EpisodeFinder):
         monkeypatch.setattr("sys.stdin", StringIO("1\n1\n"))
         assert self.client.work
         file_path = Path("./episodes/004.txt")
-        print(self.client.work.episodes)
         self.client.link_file(file_path)
         with pytest.raises(EpisodeAlreadyLinkedError):
             self.client.link_file(file_path)
