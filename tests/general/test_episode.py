@@ -4,31 +4,37 @@ from io import StringIO
 
 import pytest
 
-from kakuyomu.types import LocalEpisode
+from kakuyomu.client.client import Client
+from kakuyomu.types import EpisodeId, LocalEpisode
 from kakuyomu.types.errors import EpisodeAlreadyLinkedError, EpisodeHasNoPathError
 from kakuyomu.types.path import Path
 
 from ..helper import EpisodeExistsTest, NoEpisodeTest
 
-episode_with_path = LocalEpisode(
-    id="16816927859880032697",
-    title="第4話",
-)
 
-episode_without_path = LocalEpisode(
-    id="16816927859880026113",
-    title="第2話",
-)
+class EpisodeFinder:
+    """Episode finder"""
+
+    id_with_path = "16816927859859822600"
+    id_without_path = "16816927859880026113"
+    client: Client
+
+    def _get_local_episode_by_id(self, episode_id: EpisodeId) -> tuple[int, LocalEpisode]:
+        episodes = self.client.get_remote_episodes()
+        for index, episode in enumerate(episodes):
+            if episode.id == episode_id:
+                return index, LocalEpisode(id=episode.id, title=episode.title)
+        raise ValueError("Episode not found")
 
 
-@pytest.mark.usefixtures("fake_get_episodes")
-class TestNoEpisode(NoEpisodeTest):
+@pytest.mark.usefixtures("fake_get_remote_episodes")
+class TestNoEpisode(NoEpisodeTest, EpisodeFinder):
     """Test in the case that no episode test"""
 
     def test_episode_list(self) -> None:
         """Episode list test"""
         episodes = self.client.get_remote_episodes()
-        episode = episode_with_path
+        index, episode = self._get_local_episode_by_id(self.id_with_path)
         assert episode.id in {episode.id for episode in episodes}
         index = [episode.id for episode in episodes].index(episode.id)
         assert episodes[index].title == episode.title
@@ -54,17 +60,15 @@ class TestNoEpisode(NoEpisodeTest):
             self.client.link_file(file_path)
 
 
-
-
-@pytest.mark.usefixtures("fake_get_episodes")
-class TestEpisodesExist(EpisodeExistsTest):
+@pytest.mark.usefixtures("fake_get_remote_episodes")
+class TestEpisodesExist(EpisodeExistsTest, EpisodeFinder):
     """Test in the case that Episode exists test"""
 
     def test_episode_unlink(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Episode unlink test"""
         # select a episode which has a path
-        monkeypatch.setattr("sys.stdin", StringIO("1\n"))
-        episode = episode_with_path
+        index, episode = self._get_local_episode_by_id(self.id_with_path)
+        monkeypatch.setattr("sys.stdin", StringIO(f"{index}\n"))
         assert self.client.work
         linked_episode = self.client.get_episode_by_id(episode.id)
         assert linked_episode.path is not None
@@ -75,8 +79,8 @@ class TestEpisodesExist(EpisodeExistsTest):
     def test_episode_unlink_no_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Episode unlink no path test"""
         # select a episode which has no path
-        monkeypatch.setattr("sys.stdin", StringIO("2\n"))
-        episode = episode_without_path
+        index, episode = self._get_local_episode_by_id(self.id_without_path)
+        monkeypatch.setattr("sys.stdin", StringIO(f"{index}\n"))
         assert self.client.work
         linked_episode = self.client.get_episode_by_id(episode.id)
         assert linked_episode.path is None
