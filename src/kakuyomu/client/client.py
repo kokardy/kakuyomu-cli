@@ -129,10 +129,10 @@ class Client:
         return before.diff(after)
 
     @require_login
-    def link_file(self, filepath: Path) -> LocalEpisode:
+    def link_file(self, filepath: Path, filter_text: str) -> LocalEpisode:
         """Link file"""
         try:
-            remote_episode = self._select_remote_episode()
+            remote_episode = self._select_remote_episode(filter_text=filter_text)
             # set path
             local_episode = self._link_file(filepath, remote_episode)
             return local_episode
@@ -164,10 +164,10 @@ class Client:
         self._dump_work_toml(work)
         return result
 
-    def unlink(self) -> LocalEpisode:
+    def unlink(self, filter_text: str) -> LocalEpisode:
         """Unlink episode"""
         try:
-            local_episode = self._select_local_episode()
+            local_episode = self._select_local_episode(filter_text=filter_text)
             self._unlink(local_episode.id)
             return local_episode
         except EpisodeNotFoundError as e:
@@ -250,9 +250,9 @@ class Client:
         self.session.delete_episodes(self.work.id, data)
 
     @require_login
-    def update_remote_episode(self) -> RemoteEpisode:
+    def update_remote_episode(self, filter_text: str) -> RemoteEpisode:
         """Update remote episodes"""
-        remote_episode = self._select_remote_episode()
+        remote_episode = self._select_remote_episode(filter_text=filter_text)
         self._update_remote_episode(remote_episode.id)
         return remote_episode
 
@@ -329,10 +329,10 @@ class Client:
         return body.split("\n")
 
     @require_login
-    def get_remote_episode_body(self) -> Iterable[str]:
+    def get_remote_episode_body(self, filter_text: str) -> Iterable[str]:
         """Get episode body"""
         try:
-            remote_episode = self._select_remote_episode()
+            remote_episode = self._select_remote_episode(filter_text=filter_text)
             body: Iterable[str] = self._get_remote_episode_body(remote_episode.id)
             return body
         except ValueError:
@@ -355,9 +355,12 @@ class Client:
 
         logger.info(f"dump work toml: {work}")
 
-    def _select_remote_episode(self) -> RemoteEpisode:
+    def _select_remote_episode(self, filter_text: str) -> RemoteEpisode:
         """Select remote episode"""
         episodes: Sequence[RemoteEpisode] = self.get_remote_episodes()
+        if filter_text:
+            episodes = [episode for episode in episodes if filter_text in episode.id or filter_text in episode.title]
+
         for i, episode in enumerate(episodes):
             print(f"{i}: {episode}")
         try:
@@ -370,9 +373,12 @@ class Client:
         except IndexError:
             raise ValueError("選択された番号が存在しません")
 
-    def _select_local_episode(self) -> LocalEpisode:
+    def _select_local_episode(self, filter_text: str) -> LocalEpisode:
         """Select local episode"""
         for i, episode in enumerate(self.work.episodes):
+            if filter_text:
+                if filter_text not in episode.id and filter_text not in episode.title:
+                    continue
             print(f"{i}: {episode}")
         try:
             number = int(input("タイトルを数字で選択してください: "))
@@ -393,14 +399,14 @@ class Client:
 
         self.session.publish_reserve(self.work.id, episode_id, request_body)
 
-    def reserve_publishing_episode(self, publish_at: datetime.datetime) -> None:
+    def reserve_publishing_episode(self, publish_at: datetime.datetime, filter_text: str) -> None:
         """Publish episode"""
-        episode = self._select_remote_episode()
+        episode = self._select_remote_episode(filter_text=filter_text)
         self._reserve_publishing_episode(episode.id, publish_at)
 
-    def cancel_reservation(self) -> None:
+    def cancel_reservation(self, filter_text: str) -> None:
         """Cancel reservation"""
-        episode = self._select_remote_episode()
+        episode = self._select_remote_episode(filter_text=filter_text)
         self._cancel_reservation(episode.id)
 
     def _cancel_reservation(self, episode_id: EpisodeId) -> None:

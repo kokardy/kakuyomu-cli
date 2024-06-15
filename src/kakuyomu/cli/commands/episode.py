@@ -32,7 +32,8 @@ def fetch() -> None:
 
 @episode.command()
 @click.argument("filepath")
-def link(file: str) -> None:
+@click.option("--filter", "-F", type=str, default="")
+def link(file: str, filter: str) -> None:
     """Link episodes"""
     cwd = Path.cwd()
     path = Path(file)
@@ -40,17 +41,18 @@ def link(file: str) -> None:
     config_dir = client.config_dir
     relative_path = config_dir.relative_to(filepath)
     try:
-        episode = client.link_file(relative_path)
+        episode = client.link_file(relative_path, filter_text=filter)
         print("linked", episode)
     except Exception as e:
         print(f"リンクに失敗しました: {e}")
 
 
 @episode.command()
-def unlink() -> None:
+@click.option("--filter", "-F", type=str, default="")
+def unlink(filter: str) -> None:
     """Unlink episodes"""
     try:
-        client.unlink()
+        client.unlink(filter_text=filter)
     except Exception as e:
         print(f"リンクに失敗しました: {e}")
         raise e
@@ -68,16 +70,18 @@ def create(title: str, file: str) -> None:
 
 @episode.command()
 @click.option("--line", "-l", type=int, default=3)
-def show(line: int) -> None:
+@click.option("--filter", "-F", type=str, default="")
+def show(line: int, filter: str) -> None:
     """
     Show episode contents
 
     Args:
     ----
         line (int): 表示する行数
+        filter (str): エピソードフィルタ文字列. これをIDかタイトルに含むエピソードを表示する
 
     """
-    body = client.get_remote_episode_body()
+    body = client.get_remote_episode_body(filter_text=filter)
     count = 0
     for row in body:
         if count >= line:
@@ -95,23 +99,25 @@ def show(line: int) -> None:
 
 
 @episode.command()
-def update() -> None:
+@click.option("--filter", "-F", type=str, default="")
+def update(filter: str = "") -> None:
     """Update episode"""
-    episode = client.update_remote_episode()
+    episode = client.update_remote_episode(filter_text=filter)
     print(f"エピソードを更新しました: {episode}")
 
 
 @episode.command()
 @click.argument("publish_at_str")
-def publish(publish_at_str: str) -> None:
+@click.option("--filter", "-F", type=str, default="")
+def publish(publish_at_str: str, filter: str) -> None:
     """Publish episode"""
     if publish_at_str == "cancel":
-        client.cancel_reservation()
+        client.cancel_reservation(filter_text=filter)
         return
     date_format = "%Y/%m/%d %H:%M"
     try:
         publish_at = datetime.datetime.strptime(publish_at_str, date_format)
-        client.reserve_publishing_episode(publish_at)
+        client.reserve_publishing_episode(publish_at, filter_text=filter)
     except EpisodeReservePublishError as e:
         print(f"予約公開/キャンセルに失敗しました: {e}")
     except ValueError as e:
