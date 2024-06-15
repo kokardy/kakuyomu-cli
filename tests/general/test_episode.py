@@ -46,7 +46,7 @@ class TestNoEpisode(NoEpisodeTest, EpisodeFinder):
         assert self.client.work
 
         assert file_path not in {episode.path for episode in self.client.work.episodes}
-        self.client.link_file(file_path)
+        self.client.link_file(file_path, filter_text="")
         assert file_path in {episode.path for episode in self.client.work.episodes}
 
     def test_same_path_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -54,9 +54,9 @@ class TestNoEpisode(NoEpisodeTest, EpisodeFinder):
         monkeypatch.setattr("sys.stdin", StringIO("1\n1\n"))
         assert self.client.work
         file_path = Path("./episodes/004.txt")
-        self.client.link_file(file_path)
+        self.client.link_file(file_path, filter_text="")
         with pytest.raises(EpisodeAlreadyLinkedError):
-            self.client.link_file(file_path)
+            self.client.link_file(file_path, filter_text="")
 
 
 @pytest.mark.usefixtures("fake_get_remote_episodes")
@@ -71,7 +71,7 @@ class TestEpisodesExist(EpisodeExistsTest, EpisodeFinder):
         assert self.client.work
         linked_episode = self.client.get_episode_by_id(episode.id)
         assert linked_episode.path is not None
-        self.client.unlink()
+        self.client.unlink(filter_text="")
         unlinked_episode = self.client.get_episode_by_id(episode.id)
         assert unlinked_episode.path is None
 
@@ -84,4 +84,4 @@ class TestEpisodesExist(EpisodeExistsTest, EpisodeFinder):
         linked_episode = self.client.get_episode_by_id(episode.id)
         assert linked_episode.path is None
         with pytest.raises(EpisodeHasNoPathError):
-            self.client.unlink()
+            self.client.unlink(filter_text="")
