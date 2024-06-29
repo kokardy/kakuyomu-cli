@@ -1,6 +1,5 @@
 """Global configuration for pytest"""
 
-
 import pytest
 
 from kakuyomu.client import Client

@@ -1,4 +1,5 @@
 """Module for scraping episode page."""
+
 from typing import Any
 
 import bs4
