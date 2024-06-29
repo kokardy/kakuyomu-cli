@@ -16,5 +16,5 @@ def work() -> None:
 @work.command("list")
 def ls() -> None:
     """List work titles"""
-    for work in client.get_works().values():
-        print(work)
+    for i, work in enumerate(client.get_works().values()):
+        print(f"{i}: {work}")

@@ -2,6 +2,7 @@
 
 import datetime
 from collections.abc import Iterable
+from typing import TypedDict
 
 from pydantic import BaseModel, ConfigDict
 
@@ -48,6 +49,14 @@ class PublishReservationStatus(BaseModel):
         schedule_datetime = schedule_datetime.astimezone(JST)
 
         return cls(scheduled_at=schedule_datetime)
+
+
+class LocalEpisodeDict(TypedDict):
+    """Episode dict"""
+
+    id: EpisodeId
+    title: str
+    rel_path: str | None
 
 
 class Episode(BaseModel):
@@ -97,3 +106,11 @@ class LocalEpisode(Episode):
     def set_path(self, root: Path, path: Path) -> None:
         """Set path"""
         self.rel_path = str(path.relative_to(root))
+
+    def dump(self) -> LocalEpisodeDict:
+        """Dump model"""
+        return {
+            "id": self.id,
+            "title": self.title,
+            "rel_path": self.rel_path,
+        }

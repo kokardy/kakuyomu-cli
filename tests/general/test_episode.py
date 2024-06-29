@@ -54,12 +54,12 @@ class TestEpisodesExist(EpisodeExistsTest, EpisodeFinder):
         file_path = self.client.config_dir.work_root.joinpath(Path("./publish/004.txt"))
         assert self.client.work
 
-        episodes = self.client.work.episodes
+        episodes = self.client.work.episodes.values()
         episode = [episode for episode in episodes if episode.rel_path is None][0]
         work_root = self.client.config_dir.work_root
 
         self.client._link_file(file_path, episode.id)
-        episodes = self.client.work.episodes
+        episodes = self.client.work.episodes.values()
         assert file_path.absolute() in {
             _episode.path(work_root).absolute() for _episode in episodes if _episode.rel_path
         }
@@ -69,7 +69,7 @@ class TestEpisodesExist(EpisodeExistsTest, EpisodeFinder):
         rel_path = "publish/001.txt"
         file_path = self.client.config_dir.work_root.joinpath(Path(rel_path))
         assert self.client.work
-        episodes = self.client.work.episodes
+        episodes = self.client.work.episodes.values()
 
         episode = [episode for episode in episodes if episode.rel_path == rel_path][0]
 

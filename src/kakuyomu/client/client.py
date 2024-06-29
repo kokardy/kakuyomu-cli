@@ -118,7 +118,7 @@ class Client:
             episodes.append(local_episode)
 
         work = self.work
-        work.episodes = episodes
+        work.episodes = {episode.id: episode for episode in episodes}
 
         after_episodes = work.episodes
 
@@ -149,14 +149,16 @@ class Client:
         if same_path_episode := self.get_episode_by_path(filepath):
             logger.error(f"same path{ same_path_episode= }")
             raise EpisodeAlreadyLinkedError(f"同じファイルパスが既にリンクされています: {same_path_episode}")
-        for work_episode in work.episodes:
-            if work_episode.id == episode_id:
-                work_episode.set_path(self.config_dir.work_root, filepath)
-                logger.info(f"set filepath to episode: {episode_id}")
-                result = work_episode
-                self._dump_work_toml(work)
-                return result
-        raise EpisodeNotFoundError(f"エピソードが見つかりません: {episode_id}")
+
+        if episode_id not in work.episodes:
+            raise EpisodeNotFoundError(f"エピソードが見つかりません: {episode_id}")
+
+        work_episode = work.episodes[episode_id]
+        work_episode.set_path(self.config_dir.work_root, filepath)
+        logger.info(f"set filepath to episode: {episode_id}")
+        result = work_episode
+        self._dump_work_toml(work)
+        return result
 
     def unlink(self, filter_text: str) -> LocalEpisode:
         """Unlink episode"""
@@ -175,27 +177,26 @@ class Client:
     def _unlink(self, episode_id: EpisodeId) -> LocalEpisode:
         """Unlink episode"""
         work = self.work  # copy property to local variable
-        for episode in work.episodes:
-            if episode.id == episode_id:
-                if not episode.rel_path:
-                    raise EpisodeHasNoPathError(f"エピソードにファイルパスが設定されていません: {episode}")
-                episode.rel_path = None
-                self._dump_work_toml(work)
-                return episode
-        else:
+        if episode_id not in work.episodes:
             raise EpisodeNotFoundError(f"エピソードが見つかりません: {episode_id}")
+
+        episode = work.episodes[episode_id]
+        if not episode.rel_path:
+            raise EpisodeHasNoPathError(f"エピソードにファイルパスが設定されていません: {episode}")
+        episode.rel_path = None
+        self._dump_work_toml(work)
+        return episode
 
     def get_episode_by_id(self, episode_id: str) -> LocalEpisode:
         """Get episode by id"""
-        for episode in self.work.episodes:
-            if episode.id == episode_id:
-                return episode
-        raise EpisodeNotFoundError(f"エピソードが見つかりません: {episode_id} {self.work.episodes}")
+        if episode_id not in self.work.episodes:
+            raise EpisodeNotFoundError(f"エピソードが見つかりません: {episode_id} {self.work.episodes}")
+        return self.work.episodes[episode_id]
 
     def get_episode_by_path(self, filepath: Path) -> LocalEpisode | None:
         """Get episode by path"""
         logger.debug(f"local episodes: { self.work.episodes }")
-        for episode in self.work.episodes:
+        for episode in self.work.episodes.values():
             if episode.rel_path and episode.path(self.config_dir.work_root).absolute() == filepath.absolute():
                 return episode
         return None
@@ -203,9 +204,8 @@ class Client:
     def get_local_episode_by_remote_episode(self, remote_episode: RemoteEpisode) -> LocalEpisode:
         """Get episode by remote episode"""
         assert self.work
-        for episode in self.work.episodes:
-            if episode.same_id(remote_episode):
-                return episode
+        if remote_episode.id in self.work.episodes:
+            return self.work.episodes[remote_episode.id]
         return LocalEpisode(id=remote_episode.id, title=remote_episode.title)
 
     @require_login
@@ -372,14 +372,18 @@ class Client:
 
     def _select_local_episode(self, filter_text: str) -> LocalEpisode:
         """Select local episode"""
-        for i, episode in enumerate(self.work.episodes):
+        episodes = [episode for episode in self.work.episodes.values()]
+        if filter_text:
+            episodes = [episode for episode in episodes if filter_text in episode.id or filter_text in episode.title]
+
+        for i, episode in enumerate(episodes):
             if filter_text:
                 if filter_text not in episode.id and filter_text not in episode.title:
                     continue
             print(f"{i}: {episode}")
         try:
             number = int(input("タイトルを数字で選択してください: "))
-            episode = self.work.episodes[number]
+            episode = episodes[number]
             print(f"selected: {episode}")
             return episode
         except ValueError:

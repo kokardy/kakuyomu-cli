@@ -119,7 +119,7 @@ class TestEpisodesExist(EpisodeExistsTest):
         assert len(before_episodes) == len(final_episodes)
 
         # check linked episode
-        assert new_episode.id in {episode.id for episode in client.work.episodes}
+        assert new_episode.id in client.work.episodes
 
     def test_get_remote_episode_body(self) -> None:
         """
@@ -211,4 +211,4 @@ class TestNoEpisode(NoEpisodeTest):
 
         remote_episodes = self.client.get_remote_episodes()
 
-        assert {episode.id for episode in remote_episodes} == {episode.id for episode in after_episodes}
+        assert {episode.id for episode in remote_episodes} == {episode for episode in after_episodes}

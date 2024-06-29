@@ -65,11 +65,7 @@ class NoEpisodeTest(Test):
 
     client: Client
 
-    WORK: ClassVar[Work] = Work(
-        id="16816927859498193192",
-        title="アップロードテスト用",
-        episodes=[],
-    )
+    WORK: ClassVar[Work] = Work(id="16816927859498193192", title="アップロードテスト用", episodes={})
 
     # initialize class
     @classmethod
@@ -107,8 +103,6 @@ class EpisodeExistsTest(Test):
         super().setup_class()
         cls.client = createClient(case=Case.EPISODES_EXISTS)
         # episodesがある状態のworkに置き換えておく
-        print(f"############{cls.TOML=}")
-        print(f"############{cls.WORK=}")
         cls.client._dump_work_toml(cls.WORK)
 
     # run before all test functions
