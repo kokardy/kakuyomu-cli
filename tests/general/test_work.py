@@ -1,4 +1,5 @@
 """Test for work"""
+
 import pytest
 
 from kakuyomu.client import Client

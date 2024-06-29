@@ -1,4 +1,5 @@
 """テスト用のヘルパー関数を定義するモジュール"""
+
 import enum
 import logging
 

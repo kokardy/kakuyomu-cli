@@ -1,4 +1,5 @@
 """Web client for kakuyomu"""
+
 import datetime
 import pickle
 from typing import Iterable, Sequence
@@ -134,7 +135,7 @@ class Client:
         try:
             remote_episode = self._select_remote_episode(filter_text=filter_text)
             # set path
-            local_episode = self._link_file(filepath, remote_episode)
+            local_episode = self._link_file(filepath, remote_episode.id)
             return local_episode
         except EpisodeAlreadyLinkedError as e:
             raise e
@@ -142,27 +143,20 @@ class Client:
             logger.error(f"予期しないエラー: {e}")
             raise e
 
-    def _link_file(self, filepath: Path, episode: RemoteEpisode) -> LocalEpisode:
+    def _link_file(self, filepath: Path, episode_id: EpisodeId) -> LocalEpisode:
         """Link file"""
-        assert episode
         work = self.work  # copy property to local variable
-        result = LocalEpisode(**episode.model_dump())
-        if another_episode := self.get_episode_by_path(filepath):
-            logger.error(f"same path{ another_episode= }")
-            raise EpisodeAlreadyLinkedError(f"同じファイルパスが既にリンクされています: {another_episode}")
+        if same_path_episode := self.get_episode_by_path(filepath):
+            logger.error(f"same path{ same_path_episode= }")
+            raise EpisodeAlreadyLinkedError(f"同じファイルパスが既にリンクされています: {same_path_episode}")
         for work_episode in work.episodes:
-            if work_episode.same_id(episode):
-                work_episode.filepath = filepath
-                logger.info(f"set filepath to episode: {episode}")
+            if work_episode.id == episode_id:
+                work_episode.set_path(self.config_dir.work_root, filepath)
+                logger.info(f"set filepath to episode: {episode_id}")
                 result = work_episode
-                break
-        else:
-            result.path = filepath
-            work.episodes.append(result)
-            logger.info(f"append episode: {episode}")
-            result = result
-        self._dump_work_toml(work)
-        return result
+                self._dump_work_toml(work)
+                return result
+        raise EpisodeNotFoundError(f"エピソードが見つかりません: {episode_id}")
 
     def unlink(self, filter_text: str) -> LocalEpisode:
         """Unlink episode"""
@@ -183,9 +177,9 @@ class Client:
         work = self.work  # copy property to local variable
         for episode in work.episodes:
             if episode.id == episode_id:
-                if not episode.path:
+                if not episode.rel_path:
                     raise EpisodeHasNoPathError(f"エピソードにファイルパスが設定されていません: {episode}")
-                episode.path = None
+                episode.rel_path = None
                 self._dump_work_toml(work)
                 return episode
         else:
@@ -202,7 +196,7 @@ class Client:
         """Get episode by path"""
         logger.debug(f"local episodes: { self.work.episodes }")
         for episode in self.work.episodes:
-            if episode.path == filepath:
+            if episode.rel_path and episode.path(self.config_dir.work_root).absolute() == filepath.absolute():
                 return episode
         return None
 
@@ -236,9 +230,12 @@ class Client:
             self.session.create_episode(self.work.id, data)
 
         after_episodes = self.get_remote_episodes()
+
+        self.fetch_remote_episodes()
+
         new_episode = (set(after_episodes) - set(before_episodes)).pop()
 
-        self._link_file(filepath, new_episode)
+        self._link_file(filepath, new_episode.id)
 
     @require_login
     def delete_remote_episodes(self, episode_ids: Sequence[EpisodeId]) -> None:
@@ -274,12 +271,12 @@ class Client:
         local_episode = self.get_episode_by_id(episode_id)
 
         local_title = title if title else local_episode.title
-        local_body = "\n".join(body if body else local_episode.body())
+        work_root = self.config_dir.work_root
+        local_body = "\n".join(body if body else local_episode.body(work_root))
 
         scraper = self.session.episode_page(self.work.id, episode_id)
         csrf_token = scraper.scrape_csrf_token()
         status = scraper.scrape_status()
-        print(f"{status=}")
         request_body = UpdateEpisodeRequest.create_from_status(
             csrf_token=csrf_token,
             title=local_title,

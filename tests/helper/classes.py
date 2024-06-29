@@ -1,4 +1,5 @@
 """テスト用のクラスを定義するモジュール"""
+
 from typing import Callable, ClassVar
 
 from kakuyomu.client import Client
@@ -106,6 +107,8 @@ class EpisodeExistsTest(Test):
         super().setup_class()
         cls.client = createClient(case=Case.EPISODES_EXISTS)
         # episodesがある状態のworkに置き換えておく
+        print(f"############{cls.TOML=}")
+        print(f"############{cls.WORK=}")
         cls.client._dump_work_toml(cls.WORK)
 
     # run before all test functions
