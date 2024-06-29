@@ -91,7 +91,7 @@ def show(line: int, filter: str) -> None:
             # 空白行はスキップ
             if row.strip() == "":
                 continue
-            print(row)
+            print(row)  # 行表示
             count += 1
         except StopIteration:
             return
