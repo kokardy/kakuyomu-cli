@@ -1,9 +1,10 @@
 """Episode query"""
 
 from collections.abc import Sequence
+
 from pydantic import BaseModel
 
-from .episode import Episode, EpisodeId
+from .episode import Episode, EpisodeId, LocalEpisode
 
 
 class Diff(BaseModel):
@@ -17,16 +18,11 @@ class Diff(BaseModel):
 class Query:
     """Episode query"""
 
-    _dict: dict[EpisodeId, Episode]
-    _list: list[Episode]
+    _dict: dict[EpisodeId, LocalEpisode]
 
-    def __init__(self, episodes: Sequence[Episode]) -> None:
+    def __init__(self, episodes: dict[EpisodeId, LocalEpisode]) -> None:
         """Initialize episode query"""
-        episodes = list(episodes)
-        if self._exists_same_id(episodes):
-            raise ValueError("Duplicated id")
-        self._list = episodes
-        self._dict = {episode.id: episode for episode in episodes}
+        self._dict = episodes
 
     def _exists_same_id(self, episodes: Sequence[Episode]) -> bool:
         """Validate episodes"""
@@ -56,4 +52,5 @@ class Query:
 
     def __str__(self) -> str:
         """Return string representation of the query"""
-        return "\n".join([episode.id for episode in self._list])
+        _list = [episode for episode in self._dict.values()]
+        return "\n".join([episode.id for episode in _list])

@@ -113,9 +113,7 @@ class PublishRequest(BaseModel):
 
     operationName: str = "UpdateEpisodeReservationMutation"
     variables: _Variables
-    query: str = (
-        "mutation UpdateEpisodeReservationMutation($input: UpdateEpisodeReservationInput!) { updateEpisodeReservation(input: $input) { episode { id title work { id title __typename } __typename } __typename } }"  # noqa: E501
-    )
+    query: str = "mutation UpdateEpisodeReservationMutation($input: UpdateEpisodeReservationInput!) { updateEpisodeReservation(input: $input) { episode { id title work { id title __typename } __typename } __typename } }"  # noqa: E501
 
     @classmethod
     def create(
