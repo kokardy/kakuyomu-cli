@@ -12,21 +12,40 @@ annotated-types==0.6.0
     # via pydantic
 beautifulsoup4==4.12.2
     # via kakuyomu-cli
+black==24.4.2
+    # via kakuyomu-cli
 certifi==2023.11.17
     # via requests
 charset-normalizer==3.3.2
     # via requests
+click==8.1.7
+    # via black
 coloredlogs==15.0.1
     # via kakuyomu-cli
 humanfriendly==10.0
     # via coloredlogs
 idna==3.6
     # via requests
+isort==5.13.2
+    # via kakuyomu-cli
+mypy==1.10.1
+    # via kakuyomu-cli
+mypy-extensions==1.0.0
+    # via black
+    # via mypy
+packaging==24.1
+    # via black
+pathspec==0.12.1
+    # via black
+platformdirs==4.2.2
+    # via black
 pydantic==2.5.3
     # via kakuyomu-cli
 pydantic-core==2.14.6
     # via pydantic
 requests==2.31.0
+    # via kakuyomu-cli
+ruff==0.5.0
     # via kakuyomu-cli
 soupsieve==2.5
     # via beautifulsoup4
@@ -41,6 +60,7 @@ types-requests==2.31.0.20240106
 types-toml==0.10.8.7
     # via kakuyomu-cli
 typing-extensions==4.9.0
+    # via mypy
     # via pydantic
     # via pydantic-core
 urllib3==2.1.0

@@ -1,4 +1,5 @@
 """Episode test"""
+
 # from kakuyomu.client import Client
 from io import StringIO
 
@@ -23,7 +24,11 @@ class EpisodeFinder:
         episodes = self.client.get_remote_episodes()
         for index, episode in enumerate(episodes):
             if episode.id == episode_id:
-                return index, LocalEpisode(id=episode.id, title=episode.title)
+                local_episode = LocalEpisode(
+                    title=episode.title,
+                    id=episode.id,
+                )
+                return (index, local_episode)
         raise ValueError("Episode not found")
 
 
@@ -39,29 +44,37 @@ class TestNoEpisode(NoEpisodeTest, EpisodeFinder):
         index = [episode.id for episode in episodes].index(episode.id)
         assert episodes[index].title == episode.title
 
-    def test_episode_link(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Episode link test"""
-        monkeypatch.setattr("sys.stdin", StringIO("1\n"))
-        file_path = Path("./episodes/004.txt")
-        assert self.client.work
-
-        assert file_path not in {episode.path for episode in self.client.work.episodes}
-        self.client.link_file(file_path, filter_text="")
-        assert file_path in {episode.path for episode in self.client.work.episodes}
-
-    def test_same_path_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        """Same path error test"""
-        monkeypatch.setattr("sys.stdin", StringIO("1\n1\n"))
-        assert self.client.work
-        file_path = Path("./episodes/004.txt")
-        self.client.link_file(file_path, filter_text="")
-        with pytest.raises(EpisodeAlreadyLinkedError):
-            self.client.link_file(file_path, filter_text="")
-
 
 @pytest.mark.usefixtures("fake_get_remote_episodes")
 class TestEpisodesExist(EpisodeExistsTest, EpisodeFinder):
     """Test in the case that Episode exists test"""
+
+    def test_episode_link(self) -> None:
+        """Episode link test"""
+        file_path = self.client.config_dir.work_root.joinpath(Path("./publish/004.txt"))
+        assert self.client.work
+
+        episodes = self.client.work.episodes
+        episode = [episode for episode in episodes if episode.rel_path is None][0]
+        work_root = self.client.config_dir.work_root
+
+        self.client._link_file(file_path, episode.id)
+        episodes = self.client.work.episodes
+        assert file_path.absolute() in {
+            _episode.path(work_root).absolute() for _episode in episodes if _episode.rel_path
+        }
+
+    def test_same_path_error(self) -> None:
+        """Same path error test"""
+        rel_path = "publish/001.txt"
+        file_path = self.client.config_dir.work_root.joinpath(Path(rel_path))
+        assert self.client.work
+        episodes = self.client.work.episodes
+
+        episode = [episode for episode in episodes if episode.rel_path == rel_path][0]
+
+        with pytest.raises(EpisodeAlreadyLinkedError):
+            self.client._link_file(file_path, episode.id)
 
     def test_episode_unlink(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Episode unlink test"""
@@ -70,10 +83,10 @@ class TestEpisodesExist(EpisodeExistsTest, EpisodeFinder):
         monkeypatch.setattr("sys.stdin", StringIO(f"{index}\n"))
         assert self.client.work
         linked_episode = self.client.get_episode_by_id(episode.id)
-        assert linked_episode.path is not None
+        assert linked_episode.rel_path is not None
         self.client.unlink(filter_text="")
         unlinked_episode = self.client.get_episode_by_id(episode.id)
-        assert unlinked_episode.path is None
+        assert unlinked_episode.rel_path is None
 
     def test_episode_unlink_no_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Episode unlink no path test"""
@@ -82,6 +95,6 @@ class TestEpisodesExist(EpisodeExistsTest, EpisodeFinder):
         monkeypatch.setattr("sys.stdin", StringIO(f"{index}\n"))
         assert self.client.work
         linked_episode = self.client.get_episode_by_id(episode.id)
-        assert linked_episode.path is None
+        assert linked_episode.rel_path is None
         with pytest.raises(EpisodeHasNoPathError):
             self.client.unlink(filter_text="")

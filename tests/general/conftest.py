@@ -1,4 +1,5 @@
 """Fixtures for generic tests."""
+
 import pytest
 from pytest_mock import MockFixture
 

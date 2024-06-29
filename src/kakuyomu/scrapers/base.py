@@ -1,4 +1,5 @@
 """Base class for scraper"""
+
 import bs4
 
 

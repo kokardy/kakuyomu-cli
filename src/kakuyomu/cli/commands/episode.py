@@ -1,4 +1,5 @@
 """Episode commands"""
+
 import datetime
 
 import click
@@ -60,10 +61,10 @@ def unlink(filter: str) -> None:
 
 @episode.command()
 @click.argument("title")
-@click.argument("filepath")
+@click.argument("file")
 def create(title: str, file: str) -> None:
     """Create episode"""
-    filepath = Path(file)
+    filepath = Path(file).absolute()
     client.create_remote_episode(title=title, filepath=filepath)
     print(f"エピソードを作成しました: {title}")
 

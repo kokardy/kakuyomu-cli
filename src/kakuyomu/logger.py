@@ -1,4 +1,5 @@
 """Module for logging"""
+
 import logging
 
 import coloredlogs

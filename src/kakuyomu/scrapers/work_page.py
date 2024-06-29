@@ -1,6 +1,5 @@
 """Scrape work page."""
 
-
 from kakuyomu.types import RemoteEpisode
 
 from .base import ScraperBase
