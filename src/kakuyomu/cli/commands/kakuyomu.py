@@ -4,7 +4,6 @@ Kakuyomu CLI
 Command line interface for kakuyomu.jp
 """
 
-
 import click
 
 from kakuyomu.client import Client

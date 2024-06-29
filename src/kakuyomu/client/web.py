@@ -3,6 +3,7 @@ Web client for kakuyomu
 
 This module is a web client for kakuyomu.jp.
 """
+
 import http
 import time
 from typing import override

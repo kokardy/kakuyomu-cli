@@ -1,4 +1,5 @@
 """Test for login"""
+
 import datetime
 from typing import Callable
 
@@ -10,10 +11,6 @@ from ..helper import EpisodeExistsTest, NoEpisodeTest
 work = Work(
     id="16816927859498193192",
     title="アップロードテスト用",
-)
-episode = LocalEpisode(
-    id="16816927859880029939",
-    title="編集テスト",
 )
 
 episode_ids: list[EpisodeId] = [
@@ -38,6 +35,7 @@ class TestEpisodesExist(EpisodeExistsTest):
         "",
         "編集テスト用エピソードです。",
     ]
+    episode: LocalEpisode
 
     @classmethod
     def setup_class(cls) -> None:
@@ -45,13 +43,18 @@ class TestEpisodesExist(EpisodeExistsTest):
         super().setup_class()
         if not cls.client.status().is_login:
             cls.client.login()
-        cls.client._update_remote_episode(episode.id, title=cls.original_title, body=cls.original_body)
+
+        cls.episode = LocalEpisode(
+            id="16816927859880029939",
+            title="編集テスト",
+        )
+        cls.client._update_remote_episode(cls.episode.id, title=cls.original_title, body=cls.original_body)
 
     @classmethod
     def teardown_class(cls) -> None:
         """Restore all episodes"""
         # 元に戻す
-        cls.client._update_remote_episode(episode.id, title=cls.original_title, body=cls.original_body)
+        cls.client._update_remote_episode(cls.episode.id, title=cls.original_title, body=cls.original_body)
 
     def setup_method(self, method: Callable[..., None]) -> None:
         """Create work and episode"""
@@ -84,6 +87,7 @@ class TestEpisodesExist(EpisodeExistsTest):
     def test_episode_list(self) -> None:
         """Episode list test"""
         episodes = self.client.get_remote_episodes()
+        episode = self.episode
         assert episode.id in {episodes.id for episodes in episodes}
         index = [episode.id for episode in episodes].index(episode.id)
         assert index > -1
@@ -99,8 +103,8 @@ class TestEpisodesExist(EpisodeExistsTest):
         client = self.client
         # before
         before_episodes = client.get_remote_episodes()
-        title = "テスト001"
-        filepath = self.client.config_dir.work_root.joinpath("publish/001.txt")
+        title = "新規作成テスト: あとで消す"
+        filepath = self.client.config_dir.work_root.joinpath("publish/005.txt")
         client.create_remote_episode(title=title, filepath=filepath)
         # after
         after_episodes = client.get_remote_episodes()
@@ -123,6 +127,7 @@ class TestEpisodesExist(EpisodeExistsTest):
 
         取得されたエピソードの内容を検証する
         """
+        episode = self.episode
         body_rows = self.client._get_remote_episode_body(episode.id)
         body = "\n".join(body_rows)
         local_body = "\n".join(self.client._get_remote_episode_body(episode.id))
@@ -135,6 +140,7 @@ class TestEpisodesExist(EpisodeExistsTest):
         エピソードの内容を更新する
         更新された内容を取得して検証する
         """
+        episode = self.episode
         remote_episode = self.client.get_remote_episode(episode.id)
         original_body = list(self.client._get_remote_episode_body(episode.id))
         original_title = remote_episode.title
@@ -159,6 +165,7 @@ class TestEpisodesExist(EpisodeExistsTest):
         now = datetime.datetime.now()
         publish_at = now + datetime.timedelta(days=100)
         publish_at = publish_at.replace(second=0, microsecond=0)
+        episode = self.episode
 
         # 未公開確認
         scraper = self.client.session.publish_page(self.client.work.id, episode.id)

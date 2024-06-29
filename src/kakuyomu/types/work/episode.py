@@ -1,9 +1,9 @@
 """Define types around episode"""
+
 import datetime
 from collections.abc import Iterable
-from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, PlainSerializer, PlainValidator, ValidationInfo
+from pydantic import BaseModel, ConfigDict
 
 from kakuyomu.settings.const import JST
 from kakuyomu.types.path import Path
@@ -71,40 +71,29 @@ class RemoteEpisode(Episode):
     model_config = ConfigDict(frozen=True)
 
 
-def _validate_path(v: str | Path, info: ValidationInfo) -> Path:
-    """Validate path"""
-    if isinstance(v, str):
-        return Path(v)
-    elif isinstance(v, Path):
-        return v
-    else:
-        raise ValueError(f"Invalid path: {v=}, {info=}")
-
-
-def _serialize_path(v: Path | None) -> str | None:
-    """Serialize path"""
-    if v is None:
-        return v
-    return str(v)
-
-
-PathValidator = PlainValidator(_validate_path)
-PathSerializer = PlainSerializer(_serialize_path)
-type AnnotatedPath = Annotated[Path, PathValidator, PathSerializer]  # type: ignore[valid-type]
-
-
 class LocalEpisode(Episode):
     """Local episode model"""
 
-    path: AnnotatedPath | None = None
+    rel_path: str | None = None
 
     def __str__(self) -> str:
         """Return string representation of the episode"""
-        return f"{self.id}:{self.title} path={self.path}"
+        return f"{self.id}:{self.title} path={self.rel_path}"
 
-    def body(self) -> Iterable[str]:
+    def body(self, root: Path) -> Iterable[str]:
         """Return body text of the episode"""
-        if self.path is None:
+        if self.rel_path is None:
             raise ValueError(f"Path is not set: {self=}")
-        with open(self.path, "r") as f:
+        filepath = self.path(root)
+        with open(filepath, "r") as f:
             yield from f
+
+    def path(self, root: Path) -> Path:
+        """Return path"""
+        if self.rel_path is None:
+            raise ValueError(f"Path is not set: {self=}")
+        return Path.joinpath(root, self.rel_path)
+
+    def set_path(self, root: Path, path: Path) -> None:
+        """Set path"""
+        self.rel_path = str(path.relative_to(root))

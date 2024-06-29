@@ -1,4 +1,5 @@
 """Path module"""
+
 from functools import cached_property
 from pathlib import Path as _Path
 

@@ -1,4 +1,5 @@
 """Decorators for the client"""
+
 from functools import wraps
 from typing import Callable, Concatenate, Self
 

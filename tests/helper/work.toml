@@ -3,12 +3,12 @@ title = "アップロードテスト用"
 [[episodes]]
 id = "16816927859859822600"
 title = "ルビテスト"
-path = "publish/001.txt"
+rel_path = "publish/001.txt"
 
 [[episodes]]
 id = "16816927859880032697"
 title = "傍点テスト"
-path = "publish/002.txt"
+rel_path = "publish/002.txt"
 
 [[episodes]]
 id = "16816927859880026113"

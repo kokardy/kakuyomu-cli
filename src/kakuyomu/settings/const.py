@@ -1,4 +1,5 @@
 """CLI Settings"""
+
 import os
 import zoneinfo
 from typing import Any, Final

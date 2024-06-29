@@ -1,4 +1,5 @@
 """Main entry point for the CLI"""
+
 from .commands import kakuyomu
 
 
