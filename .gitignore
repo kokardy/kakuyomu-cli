@@ -1,4 +1,5 @@
 .kakuyomu
+.pip_token
 env.fish
 # python generated files
 __pycache__/

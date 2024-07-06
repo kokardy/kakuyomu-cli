@@ -22,6 +22,7 @@ def kakuyomu() -> None:
     Kakuyomu CLI
 
     Command line interface for kakuyomu.jp
+    カクヨムの小説投稿・編集をコマンドラインから行うためのツール
     """
 
 
@@ -32,27 +33,27 @@ kakuyomu.add_command(work)
 
 @kakuyomu.command()
 def status() -> None:
-    """Show login status"""
+    """ログインステータスを表示する"""
     print(client.status())
 
 
 @kakuyomu.command()
 def logout() -> None:
-    """Logout"""
+    """ログアウトする"""
     client.logout()
     print("logout")
 
 
 @kakuyomu.command()
 def login() -> None:
-    """Login"""
+    """ログインする"""
     client.login()
     print(client.status())
 
 
 @kakuyomu.command()
 def init() -> None:
-    """Initialize work toml"""
+    """現在のディレクトリを小説の1タイトルのrootとして初期化する"""
     try:
         client.initialize_work()
     except TOMLAlreadyExistsError as e:
