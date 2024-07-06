@@ -11,6 +11,8 @@ words:
   - coloredlogs
   - levelname
   - referer
+  - pypi
+  - eifinger
 # ignoreRegExpList:
 #   - >-
 #     /id:.*/g
