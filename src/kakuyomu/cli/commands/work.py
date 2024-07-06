@@ -10,11 +10,11 @@ client = Client(Path.cwd())
 
 @click.group()
 def work() -> None:
-    """Work commands"""
+    """小説タイトルに関するコマンド"""
 
 
 @work.command("list")
 def ls() -> None:
-    """List work titles"""
+    """小説タイトルの一覧を表示する"""
     for i, work in enumerate(client.get_works().values()):
         print(f"{i}: {work}")
