@@ -13,20 +13,20 @@ client = Client(Path.cwd())
 
 @click.group()
 def episode() -> None:
-    """Episode commands"""
+    """エピソード関係のコマンド"""
     pass
 
 
 @episode.command("list")
 def ls() -> None:
-    """List episode titles"""
+    """エピソードをリスト表示する"""
     for i, episode in enumerate(client.get_remote_episodes()):
         print(i, episode)
 
 
 @episode.command
 def fetch() -> None:
-    """Fetch remote episodes to work.toml"""
+    """リモートのエピソードをwork.tomlに同期する"""
     diff = client.fetch_remote_episodes()
     print(diff)
 
@@ -35,7 +35,7 @@ def fetch() -> None:
 @click.argument("filepath")
 @click.option("--filter", "-F", type=str, default="")
 def link(file: str, filter: str) -> None:
-    """Link episodes"""
+    """work.tomlのエピソードにファイルパスを設定する"""
     cwd = Path.cwd()
     path = Path(file)
     filepath = Path.joinpath(cwd, path)
@@ -51,7 +51,7 @@ def link(file: str, filter: str) -> None:
 @episode.command()
 @click.option("--filter", "-F", type=str, default="")
 def unlink(filter: str) -> None:
-    """Unlink episodes"""
+    """エピソードからファイルパス設定を削除する"""
     try:
         client.unlink(filter_text=filter)
     except Exception as e:
@@ -63,7 +63,15 @@ def unlink(filter: str) -> None:
 @click.argument("title")
 @click.argument("file")
 def create(title: str, file: str) -> None:
-    """Create episode"""
+    """
+    リモートにエピソードを作成する
+
+    Args:
+    ----
+        title: エピソードのタイトル
+        file: エピソードのファイルパス
+
+    """
     filepath = Path(file).absolute()
     client.create_remote_episode(title=title, filepath=filepath)
     print(f"エピソードを作成しました: {title}")
@@ -74,12 +82,12 @@ def create(title: str, file: str) -> None:
 @click.option("--filter", "-F", type=str, default="")
 def show(line: int, filter: str) -> None:
     """
-    Show episode contents
+    エピソードの内容を表示する
 
     Args:
     ----
-        line (int): 表示する行数
-        filter (str): エピソードフィルタ文字列. これをIDかタイトルに含むエピソードを表示する
+        line: 表示する行数
+        filter: エピソードフィルタ文字列. これをIDかタイトルに含むエピソードを表示する
 
     """
     body = client.get_remote_episode_body(filter_text=filter)
@@ -102,7 +110,7 @@ def show(line: int, filter: str) -> None:
 @episode.command()
 @click.option("--filter", "-F", type=str, default="")
 def update(filter: str = "") -> None:
-    """Update episode"""
+    """リモートエピソードの内容をリンクされているファイルの内容に更新する"""
     episode = client.update_remote_episode(filter_text=filter)
     print(f"エピソードを更新しました: {episode}")
 
@@ -111,7 +119,7 @@ def update(filter: str = "") -> None:
 @click.argument("publish_at_str")
 @click.option("--filter", "-F", type=str, default="")
 def publish(publish_at_str: str, filter: str) -> None:
-    """Publish episode"""
+    """エピソードの公開予約を行う"""
     if publish_at_str == "cancel":
         client.cancel_reservation(filter_text=filter)
         return
