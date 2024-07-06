@@ -1,7 +1,7 @@
 [project]
 name = "kakuyomu-cli"
-version = "0.12.2"
-license = "MIT"
+version = "0.12.3"
+license = { text = "MIT" }
 description = "Kakuyomu CLI"
 authors = [{ name = "kokardy", email = "mgc1028@gmail.com" }]
 dependencies = [
@@ -19,6 +19,7 @@ dependencies = [
   "isort>=5.13.2",
 ]
 readme = "README.md"
+keywords = ["kakuyomu", "cli"]
 requires-python = ">= 3.12"
 [project.scripts]
 kakuyomu = "kakuyomu.cli.main:main"
