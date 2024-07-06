@@ -13,18 +13,17 @@ class Path(_Path):
     @cached_property
     def config_dir(self) -> "ConfigDir":
         """Get the work root directory"""
-        root = self.root
-        cwd = self
+        directory = self
         while True:
-            path = Path.joinpath(cwd, Path(CONFIG_DIRNAME))
+            path = Path.joinpath(directory, Path(CONFIG_DIRNAME))
             if path.exists():
                 if path.is_dir():
-                    logger.info(f"work dir found: {cwd}")
-                    config_path = cwd.joinpath(CONFIG_DIRNAME)
+                    logger.debug(f"work dir found: {directory}")
+                    config_path = directory.joinpath(CONFIG_DIRNAME)
                     config_dir = ConfigDir(config_path)
                     return config_dir
-            cwd = self.parent
-            if cwd.name == root:
+            directory = directory.parent
+            if directory.name == "":
                 raise FileNotFoundError(f"{CONFIG_DIRNAME} not found")
 
     @cached_property
