@@ -38,7 +38,7 @@ idna==3.6
 iniconfig==2.0.0
     # via pytest
 isort==5.13.2
-mypy==1.10.1
+mypy==1.11.1
 mypy-extensions==1.0.0
     # via black
     # via mypy

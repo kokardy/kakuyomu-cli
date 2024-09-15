@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict
 from kakuyomu.settings.const import JST
 from kakuyomu.types.path import Path
 
-type EpisodeId = str  # type: ignore
+type EpisodeId = str  # type: ignore[valid-type]
 
 
 class EpisodeStatus(BaseModel):
