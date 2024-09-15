@@ -11,7 +11,7 @@ class MyPageScraper(ScraperBase):
     def scrape_works(self) -> dict[WorkId, Work]:
         """Scrape works from my page"""
         links = self.soup.find_all("h2", class_="workColumn-workTitle")
-        result = {}
+        result: dict[WorkId, Work] = {}
         for link in links:
             work_id = link.a.get("href").split("/")[-1]
             work_title = link.a.text
