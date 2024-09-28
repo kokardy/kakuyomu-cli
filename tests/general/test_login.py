@@ -4,6 +4,7 @@ import datetime
 from typing import Callable
 
 from kakuyomu.client import Client
+from kakuyomu.settings.login import Login
 from kakuyomu.types import EpisodeId, LocalEpisode, Work
 
 from ..helper import EpisodeExistsTest, NoEpisodeTest
@@ -42,7 +43,9 @@ class TestEpisodesExist(EpisodeExistsTest):
         """Create client"""
         super().setup_class()
         if not cls.client.status().is_login:
-            cls.client.login()
+            account = Login()
+            cls.client.login(account.email, account.password.get_secret_value())
+            del account
 
         cls.episode = LocalEpisode(
             id="16816927859880029939",
@@ -74,7 +77,6 @@ class TestEpisodesExist(EpisodeExistsTest):
 
     def test_status_login(self, login_client: Client) -> None:
         """Test status login"""
-        login_client.login()
         status = login_client.status()
         assert status.is_login
 

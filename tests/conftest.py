@@ -13,7 +13,6 @@ set_color()
 def client() -> Client:
     """Get client"""
     client = createClient(Case.NO_EPISODES)
-    client.login()
     return client
 
 
@@ -21,7 +20,6 @@ def client() -> Client:
 def login_client() -> Client:
     """Get login client"""
     client = createClient(Case.NO_EPISODES)
-    client.login()
     return client
 
 

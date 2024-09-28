@@ -1,5 +1,4 @@
 """テスト用のヘルパー関数を定義するモジュール"""
-
 import enum
 import logging
 
@@ -7,6 +6,7 @@ import coloredlogs
 
 from kakuyomu.client import Client
 from kakuyomu.logger import get_logger
+from kakuyomu.settings.login import Login
 from kakuyomu.types.path import Path
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,8 @@ def createClient(case: Case) -> Client:
     cwd = Path(f"tests/testdata/{case.value}")
     client = Client(cwd=cwd)
     if not client.status().is_login:
-        client.login()
+        account = Login()
+        client.login(account.email, account.password.get_secret_value())
     return client
 
 
