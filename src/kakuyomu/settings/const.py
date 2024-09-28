@@ -1,6 +1,5 @@
 """CLI Settings"""
 
-import os
 import zoneinfo
 from typing import Any, Final
 
@@ -42,14 +41,4 @@ class URL(metaclass=ConstMeta):
     EPISODE: Final[str] = f"{MY_WORK}/episodes/{{episode_id}}"
     PUBLISH: Final[str] = f"{EPISODE}/publish"
     OPERATION: Final[str] = f"{ROOT}/graphql?opname={{opname}}"
-
-
-class Login(metaclass=ConstMeta):
-    """Login constants"""
-
-    EMAIL_ADDRESS: Final[str] = os.environ.get("KAKUYOMU_EMAIL_ADDRESS", "")
-    PASSWORD: Final[str] = os.environ.get("KAKUYOMU_PASSWORD", "")
-
-
-if not Login.PASSWORD or not Login.EMAIL_ADDRESS:
-    raise ValueError("KAKUYOMU_EMAIL_ADDRESS and KAKUYOMU_PASSWORD must be set")
+    PRIVATE: Final[str] = f"{ROOT}/settings/private"

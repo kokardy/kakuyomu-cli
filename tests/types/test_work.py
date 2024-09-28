@@ -1,4 +1,5 @@
 """Test for Work type"""
+
 import tests.helper
 from kakuyomu.types.path import Path
 from kakuyomu.types.work import Work

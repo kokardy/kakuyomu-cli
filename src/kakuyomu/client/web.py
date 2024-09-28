@@ -13,6 +13,7 @@ import requests
 from kakuyomu.logger import get_logger
 from kakuyomu.scrapers.episode_page import EpisodePageScraper
 from kakuyomu.scrapers.my_page import MyPageScraper
+from kakuyomu.scrapers.private_page import PrivatePageScraper
 from kakuyomu.scrapers.publish_page import PublishPageScraper
 from kakuyomu.scrapers.work_page import WorkPageScraper
 from kakuyomu.settings import URL
@@ -53,17 +54,26 @@ class Session(requests.Session):
         res = self.get(URL.MY)
         return MyPageScraper(res.text)
 
+    def private_page(self) -> PrivatePageScraper:
+        """Get private page"""
+        time.sleep(self.wait_time)
+        res = self.get(URL.PRIVATE)
+        return PrivatePageScraper(res.text)
+
     def get_work_url(self, work_id: WorkId) -> str:
         """Get work url"""
-        return URL.MY_WORK.format(work_id=work_id)
+        url: str = URL.MY_WORK.format(work_id=work_id)
+        return url
 
     def episode_url(self, work_id: WorkId, episode_id: EpisodeId) -> str:
         """Get episode url"""
-        return URL.EPISODE.format(work_id=work_id, episode_id=episode_id)
+        url: str = URL.EPISODE.format(work_id=work_id, episode_id=episode_id)
+        return url
 
     def publish_url(self, work_id: WorkId, episode_id: EpisodeId) -> str:
         """Get publish url"""
-        return URL.PUBLISH.format(work_id=work_id, episode_id=episode_id)
+        url: str = URL.PUBLISH.format(work_id=work_id, episode_id=episode_id)
+        return url
 
     def work_page(self, work_id: WorkId) -> WorkPageScraper:
         """Get work page"""
