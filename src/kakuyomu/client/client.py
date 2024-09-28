@@ -8,7 +8,7 @@ import toml
 from requests.cookies import RequestsCookieJar
 
 from kakuyomu.logger import get_logger
-from kakuyomu.settings import CONFIG_DIRNAME, Login
+from kakuyomu.settings import CONFIG_DIRNAME
 from kakuyomu.types.errors import (
     EpisodeAlreadyLinkedError,
     EpisodeHasNoPathError,
@@ -31,6 +31,7 @@ class Client:
     session: Session
     cwd: Path
     config_dir: ConfigDir
+    email: str
 
     def __init__(self, cwd: Path = Path.cwd(), wait_time: float = 0.1) -> None:
         """Initialize web client"""
@@ -67,21 +68,21 @@ class Client:
         my_scraper = self.session.my_page()
         user = my_scraper.scrape_login_user()
         if user:
-            return LoginStatus(is_login=True, email=f"{ Login.EMAIL_ADDRESS }", name=user)
+            private_scraper = self.session.private_page()
+            email = private_scraper.scrape_email()
+            return LoginStatus(is_login=True, email=email, name=user)
         else:
-            return LoginStatus(is_login=False, email="", name=user)
+            return LoginStatus(is_login=False, email="", name="")
 
     def logout(self) -> None:
         """Logout"""
         self.session.cookies.clear()
         self.config_dir.cookie.unlink(missing_ok=True)
 
-    def login(self) -> None:
+    def login(self, email: str, password: str) -> None:
         """Login"""
-        email = Login.EMAIL_ADDRESS
-        password = Login.PASSWORD
-
         res = self.session.login(email, password)
+        self.email = email
 
         # save cookie to a file
         if not self.config_dir.exists():
@@ -93,7 +94,7 @@ class Client:
     def get_works(self) -> dict[WorkId, Work]:
         """Get works"""
         scraper = self.session.my_page()
-        works = scraper.scrape_works()
+        works: dict[WorkId, Work] = scraper.scrape_works()
         return works
 
     @require_login
@@ -101,7 +102,7 @@ class Client:
         """Get episodes and csrf token from work page"""
         work_id = self.work.id
         scraper = self.session.work_page(work_id)
-        episodes = scraper.scrape_episodes()
+        episodes: list[RemoteEpisode] = scraper.scrape_episodes()
         csrf_token = scraper.scrape_csrf_token()
         self._toc_token = csrf_token
         return episodes
@@ -323,7 +324,8 @@ class Client:
         scraper = self.session.episode_page(self.work.id, episode_id)
         # 最初の改行は削除
         body = scraper.scrape_body().lstrip("\n")
-        return body.split("\n")
+        body_lines: list[str] = body.split("\n")
+        return body_lines
 
     @require_login
     def get_remote_episode_body(self, filter_text: str) -> Iterable[str]:

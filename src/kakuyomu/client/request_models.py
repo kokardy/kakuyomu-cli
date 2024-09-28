@@ -55,7 +55,7 @@ class CreateEpisodeRequest(NoCsrfToken):
     body: str
 
 
-class UpdateEpisodeRequest(EpisodeStatus, WithCsrfToken):
+class UpdateEpisodeRequest(WithCsrfToken, EpisodeStatus):  # type: ignore[misc]
     """Request model to update episode"""
 
     title: str
@@ -86,6 +86,7 @@ class _Input(BaseModel):
 
     episodeId: EpisodeId
     reserveDatetime: str | None
+    completeWorkOnPublish: bool = False
 
 
 class _Variables(BaseModel):
@@ -113,7 +114,9 @@ class PublishRequest(BaseModel):
 
     operationName: str = "UpdateEpisodeReservationMutation"
     variables: _Variables
-    query: str = "mutation UpdateEpisodeReservationMutation($input: UpdateEpisodeReservationInput!) { updateEpisodeReservation(input: $input) { episode { id title work { id title __typename } __typename } __typename } }"  # noqa: E501
+    query: str = (
+        "mutation UpdateEpisodeReservationMutation($input: UpdateEpisodeReservationInput!) { updateEpisodeReservation(input: $input) { episode { id title work { id title __typename } __typename } __typename } }"  # noqa: E501
+    )
 
     @classmethod
     def create(

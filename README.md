@@ -72,6 +72,17 @@ Commands:
   update   リモートエピソードの内容をリンクされているファイルの内容に更新する
 ```
 
+## Login
+
+`kakuyomu login --help`
+
+```
+Usage: kakuyomu login [OPTIONS]
+
+  ログインする
+
+```
+
 ## usage
 
 1.  小説のルートディレクトリに移動

@@ -7,6 +7,7 @@ Command line interface for kakuyomu.jp
 import click
 
 from kakuyomu.client import Client
+from kakuyomu.settings.login import Login
 from kakuyomu.types.errors import TOMLAlreadyExistsError
 from kakuyomu.types.path import Path
 
@@ -45,9 +46,35 @@ def logout() -> None:
 
 
 @kakuyomu.command()
-def login() -> None:
-    """ログインする"""
-    client.login()
+@click.option("-email", "-U", type=str, help="Email address", default="")
+def login(email: str) -> None:
+    """
+    ログインする
+
+    ## 環境変数を使用する方法
+
+    以下の環境変数を設定して
+    `kakuyomu login` を実行するとログインできます。
+
+    * KAKUYOMU_EMAIL_ADDRESS: カクヨムのユーザー名
+
+    * KAKUYOMU_PASSWORD: カクヨムのパスワード
+
+    ## コマンドからユーザー名とパスワードを入力する方法
+
+    `kakuyomu login -U <email_address>` or
+    `kakuyomu login --email <email_address>`
+
+    """
+    if email:
+        password = click.prompt("Password", hide_input=True)
+    else:
+        account = Login()
+        email = account.email
+        password = account.password.get_secret_value()
+        del account
+
+    client.login(email, password)
     print(client.status())
 
 
