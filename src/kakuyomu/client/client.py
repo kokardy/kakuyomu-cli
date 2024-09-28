@@ -8,7 +8,7 @@ import toml
 from requests.cookies import RequestsCookieJar
 
 from kakuyomu.logger import get_logger
-from kakuyomu.settings import CONFIG_DIRNAME, Login
+from kakuyomu.settings import CONFIG_DIRNAME
 from kakuyomu.types.errors import (
     EpisodeAlreadyLinkedError,
     EpisodeHasNoPathError,
@@ -79,18 +79,8 @@ class Client:
         self.session.cookies.clear()
         self.config_dir.cookie.unlink(missing_ok=True)
 
-    def login(self, email: str | None = None, password: str | None = None) -> None:
+    def login(self, email: str, password: str) -> None:
         """Login"""
-        if not email:
-            account = Login()
-            email = account.EMAIL_ADDRESS
-            password = account.PASSWORD.get_secret_value()
-        elif email and not password:
-            raise ValueError("password is required")
-
-        assert email
-        assert password
-
         res = self.session.login(email, password)
         self.email = email
 

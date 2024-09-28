@@ -7,6 +7,7 @@ Command line interface for kakuyomu.jp
 import click
 
 from kakuyomu.client import Client
+from kakuyomu.settings.login import Login
 from kakuyomu.types.errors import TOMLAlreadyExistsError
 from kakuyomu.types.path import Path
 
@@ -67,9 +68,13 @@ def login(email: str) -> None:
     """
     if email:
         password = click.prompt("Password", hide_input=True)
-        client.login(email, password)
     else:
-        client.login()
+        account = Login()
+        email = account.email
+        password = account.password.get_secret_value()
+        del account
+
+    client.login(email, password)
     print(client.status())
 
 
