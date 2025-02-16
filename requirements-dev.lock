@@ -7,6 +7,7 @@
 #   all-features: false
 #   with-sources: false
 #   generate-hashes: false
+#   universal: false
 
 -e file:.
 annotated-types==0.6.0
@@ -22,8 +23,9 @@ cfgv==3.4.0
     # via pre-commit
 charset-normalizer==3.3.2
     # via requests
-click==8.1.7
+click==8.1.8
     # via black
+    # via kakuyomu-cli
 coloredlog==0.2.5
 coloredlogs==15.0.1
     # via kakuyomu-cli
